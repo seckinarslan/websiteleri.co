@@ -1294,7 +1294,9 @@
         saveExpenseBtn.disabled = false;
         saveExpenseBtn.classList.remove('loading');
       }
-    });
+      await loadExpenses();
+    }
+  );
 
     function getParticipantName(id) {
       if (id.startsWith('manual_')) {
