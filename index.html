@@ -1,509 +1,1614 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Infinite Generative Engine</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Neon City Synthwave PRO</title>
   <style>
     :root{
-      --fg: rgba(255,255,255,.82);
-      --fg2: rgba(255,255,255,.62);
+      --bg:#070812;
+      --ink:#f6f2ff;
+      --accent:#ff2fd6;
+      --accent2:#19f7ff;
+      --accent3:#ffb703;
+      --accent4:#ff00ff;
+      --accent5:#00ffaa;
+      color-scheme: dark;
+      transition: background-color 0.5s ease;
     }
-    html,body{height:100%;margin:0;overflow:hidden;background:#03040a;}
-    canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block;}
-    .ui{
-      position:fixed;inset:auto 16px 16px 16px;
-      display:flex;gap:12px;align-items:center;justify-content:space-between;
-      pointer-events:none;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    html,body{height:100%}
+    body{
+      margin:0;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(1000px 700px at 20% 10%, rgba(255,47,214,.18), transparent 60%),
+        radial-gradient(900px 650px at 85% 85%, rgba(25,247,255,.12), transparent 60%),
+        linear-gradient(180deg, #04040a, #080821 55%, #04040a);
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-    .panel{
-      pointer-events:auto;
-      display:flex;gap:10px;align-items:center;
-      padding:10px 12px;border-radius:16px;
-      background: rgba(0,0,0,.28);
-      border: 1px solid rgba(255,255,255,.10);
+    .frame{
+      width:min(1400px, 95vw);
+      height:min(860px, 90vh);
+      border-radius:18px;
+      overflow:hidden;
+      position:relative;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 100px rgba(0,0,0,.5);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
       backdrop-filter: blur(10px);
-      box-shadow: 0 10px 40px rgba(0,0,0,.35);
+    }
+    canvas{position:absolute; inset:0; width:100%; height:100%;}
+    header{
+      position:absolute; inset:16px 16px auto 16px;
+      z-index:10; display:flex; justify-content:space-between; gap:12px; align-items:center;
+      pointer-events:none;
+    }
+    .left{
+      pointer-events:auto;
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 6px rgba(255,255,255,.05);
+    }
+    .title{
+      display:flex; flex-direction:column; gap:2px;
+      user-select:none;
+    }
+    .title b{
+      font-size:12px;
+      letter-spacing:.26em;
+      text-transform:uppercase;
+      color:var(--ink);
+    }
+    .title small{
+      font-size:11px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color: rgba(246,242,255,.72);
+    }
+    .right{
+      pointer-events:auto;
+      display:flex; gap:10px; align-items:center;
     }
     button{
-      cursor:pointer;
-      border: 1px solid rgba(255,255,255,.16);
-      background: radial-gradient(120% 140% at 20% 20%, rgba(255,255,255,.18), rgba(255,255,255,.06));
-      color: var(--fg);
-      padding:10px 14px;border-radius:14px;
-      font-weight:700; letter-spacing:.6px;
-      transition: transform .12s ease, filter .12s ease;
+      border:none; cursor:pointer;
+      border-radius:14px;
+      padding:10px 12px;
+      color:var(--ink);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+      font-weight:700;
+      letter-spacing:.03em;
+      transition: transform .12s ease;
+      font-size: 11px;
     }
-    button:hover{ transform: translateY(-1px); filter: brightness(1.08); }
-    button:active{ transform: translateY(0px) scale(.99); }
-    .meta{color:var(--fg2);font-size:12px;line-height:1.25}
-    .meta b{color:var(--fg)}
-    .hint{opacity:.75}
+    button:hover{transform:translateY(-1px)}
+    button:active{transform:translateY(0) scale(.99)}
+    .hint{
+      pointer-events:none;
+      position:absolute; inset:auto 16px 16px 16px;
+      z-index:10;
+      display:flex; justify-content:space-between; gap:12px; align-items:flex-end;
+    }
+    .kbd{
+      pointer-events:auto;
+      display:flex; gap:10px; align-items:center;
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(246,242,255,.70);
+      text-transform:uppercase;
+      letter-spacing:.10em;
+      font-size:11px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .kbd span.code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      padding:2px 7px;
+      border-radius:10px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(246,242,255,.9);
+    }
+    .control-panel {
+      position: absolute;
+      top: 80px;
+      right: 16px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: auto;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 12px;
+      backdrop-filter: blur(10px);
+      max-width: 180px;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .control-label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(246,242,255,.7);
+    }
+    .control-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .slider {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,.1);
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid rgba(255,255,255,.3);
+    }
+    .toggle {
+      width: 40px;
+      height: 20px;
+      background: rgba(255,255,255,.1);
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+    .toggle.active {
+      background: var(--accent);
+    }
+    .toggle-knob {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.2s;
+    }
+    .toggle.active .toggle-knob {
+      transform: translateX(20px);
+    }
+    .mini-btn {
+      padding: 6px 10px;
+      font-size: 10px;
+      border-radius: 10px;
+    }
+    .event-log {
+      position: absolute;
+      bottom: 80px;
+      left: 16px;
+      z-index: 10;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 10px;
+      max-width: 220px;
+      max-height: 120px;
+      overflow-y: auto;
+      pointer-events: none;
+    }
+    .event-item {
+      font-size: 10px;
+      color: rgba(246,242,255,.7);
+      margin-bottom: 4px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(0,0,0,.3);
+    }
+    .event-item.new {
+      color: var(--accent2);
+      background: rgba(25,247,255,.1);
+    }
   </style>
 </head>
 <body>
-  <canvas id="c"></canvas>
+  <div class="frame">
+    <header>
+      <div class="left">
+        <div class="dot"></div>
+        <div class="title">
+          <b>Neon City PRO</b>
+          <small id="seedLabel">seed</small>
+        </div>
+      </div>
+      <div class="right">
+        <button id="regen">Yeni Şehir</button>
+        <button id="toggle">FX: ON</button>
+        <button id="randomize">Rastgele</button>
+        <button id="save">PNG Kaydet</button>
+      </div>
+    </header>
 
-  <div class="ui">
-    <div class="panel">
-      <button id="gen">GENERATE</button>
-      <div class="meta">
-        <div><b>Seed:</b> <span id="seed">—</span></div>
-        <div class="hint">Click → new universe • Drag → force • Space → burst • R → reset</div>
+    <div class="control-panel">
+      <div class="control-group">
+        <div class="control-label">Kontrol</div>
+        <div class="control-row">
+          <span class="control-label" style="flex: 1;">Yoğunluk</span>
+          <input type="range" min="0.5" max="2" step="0.1" value="1" class="slider" id="densitySlider">
+        </div>
+        <div class="control-row">
+          <span class="control-label" style="flex: 1;">Yağmur</span>
+          <div class="toggle" id="rainToggle">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+        <div class="control-row">
+          <span class="control-label" style="flex: 1;">UFO</span>
+          <div class="toggle active" id="ufoToggle">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+        <div class="control-row">
+          <span class="control-label" style="flex: 1;">Işık Hüz.</span>
+          <div class="toggle active" id="beamToggle">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+        <div class="control-row">
+          <button class="mini-btn" id="addUFO">UFO Ekle</button>
+          <button class="mini-btn" id="addBeam">Işık Ekle</button>
+        </div>
       </div>
     </div>
-    <div class="panel meta">
-      <div><b>Mode:</b> <span id="mode">—</span></div>
+
+    <div class="event-log" id="eventLog">
+      <div class="event-item new">Şehir oluşturuldu...</div>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div class="hint">
+      <div class="kbd"><span class="code">R</span> yenile <span class="code">S</span> png <span class="code">Drag</span> kamera <span class="code">Space</span> efekt</div>
+      <div class="kbd" id="fps">-- fps</div>
     </div>
   </div>
 
 <script>
-/* =========================================================
-   “Infinite Generative Engine”
-   - single file, no libs
-   - click creates a new deterministic universe (seed)
-   - each universe evolves forever
-   ========================================================= */
-
-// ---------- Canvas ----------
-const canvas = document.getElementById("c");
-const ctx = canvas.getContext("2d", { alpha: true });
-
-let W=0,H=0,DPR=Math.min(2, devicePixelRatio||1);
-function resize(){
-  W = innerWidth|0; H = innerHeight|0;
-  canvas.width = (W*DPR)|0; canvas.height = (H*DPR)|0;
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-addEventListener("resize", resize, {passive:true});
-resize();
-
-// ---------- UI ----------
-const $seed = document.getElementById("seed");
-const $mode = document.getElementById("mode");
-const $gen  = document.getElementById("gen");
-
-// ---------- Deterministic PRNG (seeded) ----------
-function sfc32(a,b,c,d){
-  return function(){
-    a|=0; b|=0; c|=0; d|=0;
-    let t = (a + b | 0) + d | 0;
-    d = d + 1 | 0;
-    a = b ^ b >>> 9;
-    b = c + (c<<3) | 0;
-    c = (c<<21 | c>>>11);
-    c = c + t | 0;
-    return (t >>> 0) / 4294967296;
-  };
-}
-function xmur3(str){
-  let h = 1779033703 ^ str.length;
-  for (let i=0;i<str.length;i++){
-    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
-    h = (h<<13) | (h>>>19);
-  }
-  return function(){
-    h = Math.imul(h ^ (h>>>16), 2246822507);
-    h = Math.imul(h ^ (h>>>13), 3266489909);
-    return (h ^= h>>>16) >>> 0;
-  };
-}
-function makeRng(seedStr){
-  const h = xmur3(seedStr);
-  return sfc32(h(), h(), h(), h());
-}
-
-// ---------- Pointer ----------
-const pointer = {x:W*0.5, y:H*0.5, down:false};
-addEventListener("pointerdown", e=>{pointer.down=true; pointer.x=e.clientX; pointer.y=e.clientY;},{passive:true});
-addEventListener("pointerup",   ()=>{pointer.down=false;},{passive:true});
-addEventListener("pointermove", e=>{pointer.x=e.clientX; pointer.y=e.clientY;},{passive:true});
-
-// ---------- Universe State ----------
-let rng = makeRng("boot");
-let universe = null;
-let t = 0;
-let clickCount = 0;
-
-// ---------- Helpers ----------
-const TAU = Math.PI * 2;
-function clamp(x,a,b){ return x<a?a:(x>b?b:x); }
-function lerp(a,b,t){ return a + (b-a)*t; }
-function hashColorHue(rand){
-  // stable “signature” hue per universe
-  return Math.floor(rand()*360);
-}
-
-// ---------- Scene 1: Flow Field Neon Trails ----------
-function makeFlowField(rand){
-  const n = (6000 + Math.floor(rand()*9000));     // particles
-  const trailAlpha = lerp(0.035, 0.10, rand());   // persistence
-  const speed = lerp(0.55, 1.10, rand());
-  const noiseScale = lerp(0.0012, 0.0045, rand());
-  const curl = lerp(1.2, 2.8, rand());
-  const hue0 = hashColorHue(rand);
-  const hueDrift = lerp(10, 85, rand);
-  const forceRadius = lerp(140, 320, rand());
-  const forceStrength = lerp(1.2, 4.0, rand());
-
-  const P = new Float32Array(n*4);
-  for (let i=0;i<n;i++){
-    const k=i*4;
-    P[k]=rand()*W; P[k+1]=rand()*H;
-    P[k+2]=(rand()-.5)*0.2; P[k+3]=(rand()-.5)*0.2;
-  }
-
-  let phase = rand()*1000;
-
-  function fieldAngle(x,y){
-    const ax = x*noiseScale, ay=y*noiseScale;
-    // layered trig “fake noise”
-    const a = Math.sin(ax + phase) + 0.6*Math.cos(ay*1.3 - phase*0.9) + 0.35*Math.sin((ax+ay)*0.7 + phase*0.4);
-    const b = Math.cos(ay - phase) + 0.6*Math.sin(ax*1.2 + phase*1.1) - 0.35*Math.cos((ax-ay)*0.8 - phase*0.5);
-    return Math.atan2(b,a)*curl;
-  }
-
-  function burst(){
-    const cx=pointer.x, cy=pointer.y;
-    for (let i=0;i<n;i+=2){
-      const k=i*4;
-      const dx=P[k]-cx, dy=P[k+1]-cy;
-      const d=Math.hypot(dx,dy)+0.001;
-      const f=(280 + rand()*420)/d;
-      P[k+2] += (dx/d)*f;
-      P[k+3] += (dy/d)*f;
+(() => {
+  // ---------- Seeded RNG ----------
+  function xmur3(str){
+    let h = 1779033703 ^ str.length;
+    for (let i=0;i<str.length;i++){
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return function(){
+      h = Math.imul(h ^ (h >>> 16), 2246822507);
+      h = Math.imul(h ^ (h >>> 13), 3266489909);
+      h ^= (h >>> 16);
+      return h >>> 0;
     }
   }
+  function sfc32(a,b,c,d){
+    return function(){
+      a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+      let t = (a + b) | 0;
+      a = b ^ (b >>> 9);
+      b = (c + (c << 3)) | 0;
+      c = (c << 21) | (c >>> 11);
+      d = (d + 1) | 0;
+      t = (t + d) | 0;
+      c = (c + t) | 0;
+      return (t >>> 0) / 4294967296;
+    }
+  }
+  function makeRng(seedStr){
+    const seed = xmur3(seedStr);
+    return sfc32(seed(), seed(), seed(), seed());
+  }
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const TAU = Math.PI * 2;
 
-  return {
-    name:"Neon Flow Field",
-    clear(){
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle="rgba(0,0,0,1)";
-      ctx.fillRect(0,0,W,H);
-    },
-    burst,
-    step(dt){
-      phase += Math.PI * 0.0025 * dt;
+  // ---------- DOM / Canvas ----------
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d", { alpha:true });
+  const seedLabel = document.getElementById("seedLabel");
+  const regenBtn = document.getElementById("regen");
+  const toggleBtn = document.getElementById("toggle");
+  const randomizeBtn = document.getElementById("randomize");
+  const saveBtn = document.getElementById("save");
+  const fpsEl = document.getElementById("fps");
+  const eventLog = document.getElementById("eventLog");
+  const densitySlider = document.getElementById("densitySlider");
+  const rainToggle = document.getElementById("rainToggle");
+  const ufoToggle = document.getElementById("ufoToggle");
+  const beamToggle = document.getElementById("beamToggle");
+  const addUFOBtn = document.getElementById("addUFO");
+  const addBeamBtn = document.getElementById("addBeam");
 
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle = `rgba(0,0,0,${trailAlpha})`;
-      ctx.fillRect(0,0,W,H);
+  // offscreen for bloom-ish compositing
+  const off = document.createElement("canvas");
+  const octx = off.getContext("2d", { alpha:true });
 
-      ctx.globalCompositeOperation="lighter";
-      ctx.lineWidth = lerp(0.7, 1.8, rand());
+  let dpr = 1;
+  function fit(){
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const r = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(r.width * dpr);
+    canvas.height = Math.floor(r.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
 
-      const fx=pointer.x, fy=pointer.y;
-      const R=forceRadius, R2=R*R;
+    off.width = canvas.width;
+    off.height = canvas.height;
+    octx.setTransform(1,0,0,1,0,0);
+  }
 
-      for (let i=0;i<n;i++){
-        const k=i*4;
-        const x=P[k], y=P[k+1];
-        let vx=P[k+2], vy=P[k+3];
+  // ---------- Extended Palette (Synthwave) ----------
+  const PALETTES = [
+    {bg0:"#050511", bg1:"#0a0a2a", pink:"#ff2fd6", cyan:"#19f7ff", sun:"#ffb703", purple:"#7c5cff", green:"#00ffaa", orange:"#ff6b35"},
+    {bg0:"#040414", bg1:"#120c3a", pink:"#ff4fd8", cyan:"#00e6ff", sun:"#ffd166", purple:"#9b5cff", green:"#00ff88", orange:"#ff8c42"},
+    {bg0:"#05041a", bg1:"#0f0b34", pink:"#ff2a6d", cyan:"#05d9e8", sun:"#fca311", purple:"#b388ff", green:"#0aff9d", orange:"#ff5e5b"},
+    {bg0:"#0a0518", bg1:"#1a0c3a", pink:"#ff00ff", cyan:"#00ffff", sun:"#ffff00", purple:"#aa00ff", green:"#00ffaa", orange:"#ff5500"},
+    {bg0:"#080a1a", bg1:"#151540", pink:"#ff1493", cyan:"#00f5ff", sun:"#ffd700", purple:"#9370db", green:"#7fff00", orange:"#ff4500"}
+  ];
 
-        const ang = fieldAngle(x,y);
-        vx += Math.cos(ang)*0.18;
-        vy += Math.sin(ang)*0.18;
+  // ---------- State ----------
+  let seedStr = "";
+  let rng = makeRng(String(Date.now()));
+  let P = PALETTES[0];
+  let fxOn = true;
+  let density = 1.0;
+  let rainEnabled = true;
+  let ufoEnabled = true;
+  let beamsEnabled = true;
 
-        const dx=fx-x, dy=fy-y;
-        const d2=dx*dx+dy*dy;
-        if (d2 < R2){
-          const d=Math.sqrt(d2)+0.001;
-          const pull=(1 - d/R);
-          const s=(pointer.down?1:-0.22)*forceStrength*pull;
-          vx += (dx/d)*s;
-          vy += (dy/d)*s;
-        }
+  // camera drift (mouse)
+  let mx = 0, my = 0;
+  let camX = 0, camY = 0;
+  let dragging = false;
+  let dragStart = {x:0,y:0};
+  let camBase = {x:0,y:0};
 
-        vx *= 0.92; vy *= 0.92;
-        const nx = x + vx*speed;
-        const ny = y + vy*speed;
+  // city layers
+  let layers = [];
+  let rain = [];
+  let stars = [];
+  let billboards = [];
+  let horizon = 0;
+  let sun = {x:0,y:0,r:0};
+  let beat = 0;
+  
+  // new elements
+  let ufos = [];
+  let lightBeams = [];
+  let flyingTexts = [];
+  let particles = [];
+  let glitches = [];
 
-        const hue = (hue0 + (ang*180/Math.PI) + (t*hueDrift))%360;
-        ctx.strokeStyle = `hsla(${hue}, 95%, 62%, 0.55)`;
-        ctx.beginPath();
-        ctx.moveTo(x,y);
-        ctx.lineTo(nx,ny);
-        ctx.stroke();
+  // fps
+  let lastFpsT = performance.now(), frames = 0;
 
-        // wrap
-        let wx=nx, wy=ny;
-        if (wx<0) wx+=W; else if (wx>W) wx-=W;
-        if (wy<0) wy+=H; else if (wy>H) wy-=H;
+  function rand(a=1,b=0){
+    const r = rng();
+    return b===0 ? r*a : lerp(a,b,r);
+  }
+  function rint(a,b){ return Math.floor(rand(a,b+1)); }
+  function pick(arr){ return arr[Math.floor(rng()*arr.length)]; }
+  function chance(p){ return rng() < p; }
 
-        P[k]=wx; P[k+1]=wy; P[k+2]=vx; P[k+3]=vy;
+  function addEvent(text){
+    const event = document.createElement("div");
+    event.className = "event-item new";
+    event.textContent = text;
+    eventLog.appendChild(event);
+    
+    // Remove old events if too many
+    while(eventLog.children.length > 8){
+      eventLog.removeChild(eventLog.firstChild);
+    }
+    
+    // Auto remove "new" class after 2 seconds
+    setTimeout(() => {
+      event.classList.remove("new");
+    }, 2000);
+    
+    // Scroll to bottom
+    eventLog.scrollTop = eventLog.scrollHeight;
+  }
+
+  function urlSeed(){
+    const u = new URL(location.href);
+    return u.searchParams.get("seed");
+  }
+  function setCss(P){
+    document.documentElement.style.setProperty("--bg", P.bg0);
+    document.documentElement.style.setProperty("--accent", P.pink);
+    document.documentElement.style.setProperty("--accent2", P.cyan);
+    document.documentElement.style.setProperty("--accent3", P.sun);
+    document.documentElement.style.setProperty("--accent4", P.purple);
+    document.documentElement.style.setProperty("--accent5", P.green);
+  }
+  function hexToRgb(hex){
+    const c = hex.replace("#","");
+    return {r:parseInt(c.slice(0,2),16), g:parseInt(c.slice(2,4),16), b:parseInt(c.slice(4,6),16)};
+  }
+  function rgba(hex,a){
+    const {r,g,b} = hexToRgb(hex);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+
+  // ---------- Procedural generation ----------
+  function genCity(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    horizon = h * rand(.46, .62);
+
+    P = pick(PALETTES);
+    setCss(P);
+
+    sun.x = w * rand(.18,.82);
+    sun.y = horizon * rand(.20,.72);
+    sun.r = Math.min(w,h) * rand(.07,.12);
+
+    // stars
+    stars = [];
+    const starN = rint(140, 240) * density;
+    for(let i=0;i<starN;i++){
+      stars.push({
+        x: rand(w),
+        y: rand(h*0.6),
+        a: rand(.12,.65),
+        s: rand(.6, 2.2),
+        twinkle: rand(0.5, 2.0)
+      });
+    }
+
+    // layers: back -> front
+    layers = [];
+    const L = 4 + rint(0, 2);
+    for(let li=0; li<L; li++){
+      const depth = li/(L-1);
+      const count = Math.floor((rint(18, 34) - li*3) * density);
+      const baseY = horizon + depth*rand(8, 24);
+      const maxH = h*(.12 + depth*.38);
+      const minH = h*(.06 + depth*.22);
+      const layer = { depth, buildings: [], glowLines: [] };
+
+      let x = -rand(40, 120);
+      for(let i=0;i<count;i++){
+        const bw = rand(w/(count)*0.9, w/(count)*1.7) * (1.0 + depth*0.25);
+        const bh = rand(minH, maxH);
+        const y = baseY - bh;
+
+        const roofType = pick(["antenna", "flat", "step", "dome", "spire", "grid", "screen"]);
+        const winDensity = clamp(0.35 + depth*0.25 + rand(-0.1,0.1), 0.22, 0.75);
+
+        const neon = pick([P.cyan, P.pink, P.purple, P.green, P.sun]);
+        const neon2 = pick([P.cyan, P.pink, P.sun, P.orange, P.green]);
+
+        layer.buildings.push({x,y,w:bw,h:bh, roof:roofType, winDensity, neon, neon2, special: chance(0.1) ? "hologram" : (chance(0.05) ? "portal" : "normal")});
+        x += bw + rand(4, 18);
+        if(x > w+120) break;
       }
 
-      ctx.globalCompositeOperation="source-over";
+      // skyline glow lines
+      const lines = rint(6, 14) * density;
+      for(let k=0;k<lines;k++){
+        layer.glowLines.push({
+          x1: rand(w), x2: rand(w),
+          y: horizon - rand(20, 180) * (1-depth*0.6),
+          a: rand(.04,.14) * (1-depth*0.6),
+          c: pick([P.cyan,P.pink,P.purple,P.green,P.sun]),
+          pulse: rand(0.5, 1.5)
+        });
+      }
+
+      layers.push(layer);
     }
-  };
-}
 
-// ---------- Scene 2: Nebula “Fractal-ish” ----------
-function makeNebula(rand){
-  const hue0 = hashColorHue(rand);
-  const layers = 5 + (rand()*6|0);
-  const grain = lerp(0.02, 0.07, rand());
-  const fade = lerp(0.04, 0.12, rand());
-  const swirl = lerp(0.6, 2.2, rand());
-  let phase = rand()*1000;
+    // rain
+    rain = [];
+    const drops = rint(240, 420) * density;
+    for(let i=0;i<drops;i++){
+      rain.push({
+        x: rand(w),
+        y: rand(-h, h),
+        len: rand(18, 120),
+        sp: rand(220, 760),
+        w: rand(.7, 2.2),
+        c: pick([P.cyan, P.pink, P.purple, P.green]),
+        a: rand(.06,.18),
+        trail: []
+      });
+    }
 
-  function burst(){ phase += Math.PI * (2 + rand()*6); }
+    // billboards (front layer)
+    billboards = [];
+    const bN = rint(6, 12) * density;
+    for(let i=0;i<bN;i++){
+      billboards.push({
+        x: rand(w*0.08, w*0.92),
+        y: rand(horizon*0.55, horizon*0.95),
+        w: rand(90, 220),
+        h: rand(36, 90),
+        c1: pick([P.cyan, P.pink, P.sun, P.green, P.orange]),
+        c2: pick([P.pink, P.cyan, P.purple, P.sun, P.green]),
+        flick: rand(0.8, 2.4),
+        phase: rand(TAU),
+        text: chance(0.5) ? pick(["VOID", "SYNTH", "NEON", "RETRO", "CYBER", "PUNK", "WAVE", "GRID"]) : ""
+      });
+    }
 
-  return {
-    name:"Nebula Bloom",
-    clear(){
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle="rgba(0,0,0,1)";
-      ctx.fillRect(0,0,W,H);
-    },
-    burst,
-    step(dt){
-      phase += Math.PI*0.0009*dt;
+    // UFOs
+    ufos = [];
+    const ufoN = rint(1, 4);
+    for(let i=0;i<ufoN;i++){
+      ufos.push({
+        x: rand(w*0.2, w*0.8),
+        y: rand(h*0.1, horizon*0.7),
+        r: rand(20, 60),
+        speed: rand(0.5, 2.0),
+        phase: rand(TAU),
+        color: pick([P.cyan, P.pink, P.green]),
+        beam: chance(0.4),
+        beamLength: rand(100, 300)
+      });
+    }
 
-      // gentle fade
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle = `rgba(0,0,0,${fade})`;
-      ctx.fillRect(0,0,W,H);
+    // Light beams (searchlights)
+    lightBeams = [];
+    const beamN = rint(3, 8);
+    for(let i=0;i<beamN;i++){
+      lightBeams.push({
+        x: rand(w),
+        y: h,
+        angle: rand(TAU),
+        speed: rand(0.01, 0.03),
+        width: rand(20, 50),
+        length: rand(300, 600),
+        color: pick([P.cyan, P.pink, P.green]),
+        alpha: rand(0.1, 0.2)
+      });
+    }
 
-      ctx.globalCompositeOperation="lighter";
+    // Flying texts
+    flyingTexts = [];
+    const textN = rint(2, 5);
+    for(let i=0;i<textN;i++){
+      flyingTexts.push({
+        x: rand(w),
+        y: rand(h*0.2, h*0.6),
+        text: pick(["RETRO", "SYNTH", "WAVE", "1984", "CYBER", "NEON", "DREAM", "NIGHT"]),
+        speed: rand(0.2, 1.0),
+        size: rand(20, 40),
+        color: pick([P.cyan, P.pink, P.green, P.sun]),
+        alpha: rand(0.3, 0.7),
+        life: rand(100, 300)
+      });
+    }
 
-      const cx = pointer.down ? pointer.x : W*0.5;
-      const cy = pointer.down ? pointer.y : H*0.5;
+    // reset camera
+    camX = camY = 0;
+    camBase.x = camBase.y = 0;
+    
+    addEvent("Yeni şehir oluşturuldu: " + seedStr);
+  }
 
-      for (let L=0; L<layers; L++){
-        const s = 0.35 + L*0.18;
-        const rad = Math.min(W,H) * (0.18 + L*0.06);
-        const a = phase*(1 + L*0.12) + t*(0.5 + L*0.09);
+  // ---------- Drawing primitives ----------
+  function bgGradient(w,h){
+    const g = ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0, P.bg0);
+    g.addColorStop(.55, P.bg1);
+    g.addColorStop(1, "#03030a");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
 
-        const x = cx + Math.cos(a*swirl) * rad * (0.7 + 0.25*Math.sin(a*1.3));
-        const y = cy + Math.sin(a*swirl) * rad * (0.7 + 0.25*Math.cos(a*1.1));
+    // dynamic nebula
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.15;
+    for(let i=0;i<5;i++){
+      const x = w * rand(0.2,0.8);
+      const y = h * rand(0.1,0.4);
+      const rad = w * rand(0.1,0.3);
+      const grd = ctx.createRadialGradient(x,y,0,x,y,rad);
+      grd.addColorStop(0, rgba(P.purple, 0.5));
+      grd.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(x,y,rad,0,TAU);
+      ctx.fill();
+    }
+    ctx.restore();
 
-        const hue = (hue0 + L*22 + t*18)%360;
-        const alpha = 0.07 + 0.02*L;
+    // vignette
+    const v = ctx.createRadialGradient(w*0.5,h*0.45, 10, w*0.5,h*0.45, Math.max(w,h)*0.72);
+    v.addColorStop(0, "rgba(0,0,0,0)");
+    v.addColorStop(1, "rgba(0,0,0,.65)");
+    ctx.fillStyle = v;
+    ctx.fillRect(0,0,w,h);
+  }
 
+  function drawSun(w,h,time){
+    const pulse = 0.08*Math.sin(time*0.0018) + 0.06*Math.sin(time*0.0009);
+    const r = sun.r * (1 + pulse);
+
+    // glow
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const glow = ctx.createRadialGradient(sun.x,sun.y, 0, sun.x,sun.y, r*2.4);
+    glow.addColorStop(0, rgba(P.sun, .28));
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(sun.x,sun.y,r*2.4,0,TAU); ctx.fill();
+    ctx.restore();
+
+    // disc + stripes
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = rgba(P.sun, .55);
+    ctx.beginPath(); ctx.arc(sun.x,sun.y,r,0,TAU); ctx.fill();
+
+    const stripes = rint(6, 11);
+    for(let i=0;i<stripes;i++){
+      const yy = sun.y - r + (i/(stripes))*2*r;
+      const hh = rand(6, 14);
+      ctx.fillStyle = rgba(P.bg0, 0.35);
+      ctx.fillRect(sun.x-r, yy, 2*r, hh);
+    }
+    ctx.restore();
+
+    // corona rays
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const rays = 16;
+    for(let i=0;i<rays;i++){
+      const angle = (i/rays)*TAU + time*0.0005;
+      const length = r * (1.2 + 0.3*Math.sin(time*0.001 + i*0.5));
+      const x2 = sun.x + Math.cos(angle)*length;
+      const y2 = sun.y + Math.sin(angle)*length;
+      
+      const grd = ctx.createLinearGradient(sun.x,sun.y,x2,y2);
+      grd.addColorStop(0, rgba(P.sun, 0.4));
+      grd.addColorStop(1, "rgba(0,0,0,0)");
+      
+      ctx.strokeStyle = grd;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sun.x, sun.y);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // horizon haze
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    const hz = ctx.createLinearGradient(0,horizon-80,0,horizon+120);
+    hz.addColorStop(0, "rgba(0,0,0,0)");
+    hz.addColorStop(.35, rgba(P.pink, .10));
+    hz.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = hz;
+    ctx.fillRect(0,horizon-80,w,200);
+    ctx.restore();
+  }
+
+  function drawStars(time){
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    for(const s of stars){
+      const tw = 0.35 + 0.65*Math.sin((time*0.0012 * s.twinkle + s.x*0.02));
+      ctx.fillStyle = `rgba(246,242,255,${s.a*tw})`;
+      ctx.fillRect(s.x,s.y,s.s,s.s);
+      
+      // occasional shooting star
+      if(chance(0.0001)){
+        particles.push({
+          x: s.x,
+          y: s.y,
+          vx: rand(5, 15),
+          vy: rand(2, 8),
+          life: 60,
+          color: P.cyan,
+          size: 2
+        });
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawGrid(w,h,time){
+    const gridTop = horizon;
+    const gridBottom = h + 60;
+    const centerX = w*0.5;
+    const depth = h*0.9;
+
+    // perspective lines
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.lineWidth = 1;
+
+    const vLines = rint(18, 28);
+    for(let i=-vLines;i<=vLines;i++){
+      const t = i/(vLines);
+      const x0 = centerX + t*w*0.9;
+      const x1 = centerX + t*w*0.15;
+      ctx.strokeStyle = rgba(P.cyan, 0.12);
+      ctx.beginPath();
+      ctx.moveTo(x0, gridBottom);
+      ctx.lineTo(x1, gridTop);
+      ctx.stroke();
+    }
+
+    // horizontal lines (animated with pulse)
+    const rows = 18;
+    for(let r=0;r<rows;r++){
+      const z = r/(rows-1);
+      const y = lerp(gridTop, gridBottom, z*z);
+      const wob = (time*0.06) % 60;
+      const pulse = 0.5 + 0.5*Math.sin(time*0.001 + r*0.7);
+      const yy = y + wob*(1-z);
+      ctx.strokeStyle = rgba(P.pink, 0.10 * pulse);
+      ctx.beginPath();
+      ctx.moveTo(0, yy);
+      ctx.lineTo(w, yy);
+      ctx.stroke();
+    }
+
+    // glow at horizon with pulse
+    const pulse = 0.5 + 0.5*Math.sin(time*0.001);
+    const g = ctx.createLinearGradient(0,gridTop-20,0,gridTop+120);
+    g.addColorStop(0,"rgba(0,0,0,0)");
+    g.addColorStop(.2, rgba(P.cyan,.10 * pulse));
+    g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0,gridTop-20,w,180);
+
+    ctx.restore();
+  }
+
+  function drawBuildings(time){
+    const w = canvas.clientWidth;
+
+    for(const layer of layers){
+      const d = layer.depth;
+      const par = 1 + d*1.8;
+      const xShift = camX * par * 0.6;
+      const yShift = camY * par * 0.25;
+
+      // glow lines behind buildings
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      for(const gl of layer.glowLines){
+        const pulse = 0.5 + 0.5*Math.sin(time*0.001 * gl.pulse);
+        ctx.strokeStyle = rgba(gl.c, gl.a * pulse);
+        ctx.lineWidth = 2;
+        ctx.shadowColor = rgba(gl.c, gl.a * pulse);
+        ctx.shadowBlur = 18;
         ctx.beginPath();
-        ctx.fillStyle = `hsla(${hue}, 90%, ${55 + L*3}%, ${alpha})`;
-        ctx.arc(x, y, rad*s, 0, TAU);
+        ctx.moveTo(gl.x1 + xShift*0.2, gl.y + yShift*0.2);
+        ctx.lineTo(gl.x2 + xShift*0.2, gl.y + yShift*0.2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      for(const b of layer.buildings){
+        const x = b.x + xShift;
+        const y = b.y + yShift;
+
+        // building fill
+        const shade = 10 + d*40;
+        ctx.fillStyle = `rgba(0,0,0,${0.55 - d*0.22})`;
+        ctx.fillRect(x, y, b.w, b.h);
+
+        // subtle gradient
+        const g = ctx.createLinearGradient(x,y,x+b.w,y+b.h);
+        g.addColorStop(0, `rgba(255,255,255,${0.04 - d*0.01})`);
+        g.addColorStop(1, `rgba(0,0,0,${0.18 + d*0.10})`);
+        ctx.fillStyle = g;
+        ctx.fillRect(x,y,b.w,b.h);
+
+        // special building effects
+        if(b.special === "hologram"){
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+          const pulse = 0.5 + 0.5*Math.sin(time*0.002);
+          ctx.fillStyle = rgba(b.neon, 0.2 * pulse);
+          ctx.fillRect(x, y, b.w, b.h);
+          ctx.restore();
+        } else if(b.special === "portal"){
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+          const pulse = 0.5 + 0.5*Math.sin(time*0.003);
+          const grd = ctx.createRadialGradient(x+b.w/2, y+b.h/2, 0, x+b.w/2, y+b.h/2, Math.min(b.w, b.h)/2);
+          grd.addColorStop(0, rgba(b.neon, 0.6 * pulse));
+          grd.addColorStop(1, rgba(b.neon2, 0.1 * pulse));
+          ctx.fillStyle = grd;
+          ctx.beginPath();
+          ctx.arc(x+b.w/2, y+b.h/2, Math.min(b.w, b.h)/2, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // roof detail based on type
+        ctx.save();
+        ctx.globalCompositeOperation = "screen";
+        ctx.strokeStyle = rgba(b.neon, 0.10 + (1-d)*0.12);
+        ctx.lineWidth = 2;
+        ctx.shadowColor = rgba(b.neon, 0.20);
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        
+        switch(b.roof){
+          case "flat":
+            ctx.moveTo(x, y+2); ctx.lineTo(x+b.w, y+2);
+            break;
+          case "step":
+            ctx.moveTo(x, y+6);
+            ctx.lineTo(x+b.w*0.55, y+6);
+            ctx.lineTo(x+b.w*0.55, y+2);
+            ctx.lineTo(x+b.w, y+2);
+            break;
+          case "dome":
+            ctx.arc(x+b.w/2, y, Math.min(b.w, 30), 0, Math.PI, true);
+            break;
+          case "spire":
+            ctx.moveTo(x+b.w/2, y);
+            ctx.lineTo(x+b.w/2, y - 30);
+            ctx.lineTo(x+b.w/2 + 5, y - 20);
+            ctx.lineTo(x+b.w/2 - 5, y - 20);
+            ctx.closePath();
+            break;
+          case "grid":
+            for(let i=0;i<5;i++){
+              const xg = x + (i/4)*b.w;
+              ctx.moveTo(xg, y);
+              ctx.lineTo(xg, y - 15);
+            }
+            break;
+          case "screen":
+            // LED screen on roof
+            ctx.fillStyle = rgba(b.neon2, 0.3);
+            ctx.fillRect(x+5, y-10, b.w-10, 8);
+            break;
+          default: // antenna
+            ctx.moveTo(x, y+4); ctx.lineTo(x+b.w, y+4);
+            const ax = x+b.w*rand(.25,.75);
+            ctx.moveTo(ax, y+4); ctx.lineTo(ax, y - b.h*rand(.05,.12));
+        }
+        
+        if(b.roof !== "screen") ctx.stroke();
+        ctx.restore();
+
+        // windows
+        const cols = Math.max(2, Math.floor(b.w / (14 + d*10)));
+        const rows = Math.max(3, Math.floor(b.h / (16 + d*12)));
+        const ww = b.w/cols;
+        const hh = b.h/rows;
+
+        for(let r=0;r<rows;r++){
+          for(let c=0;c<cols;c++){
+            if(rng() > b.winDensity) continue;
+            const wx = x + c*ww + ww*0.18;
+            const wy = y + r*hh + hh*0.22;
+            const w2 = ww*0.62;
+            const h2 = hh*0.52;
+            const flick = 0.55 + 0.45*Math.sin((time*0.002 + r*0.7 + c*0.9 + d*3.2));
+            const on = (rng() < 0.85) ? 1 : 0;
+            const col = (rng() < 0.5) ? b.neon : b.neon2;
+            ctx.fillStyle = rgba(col, (0.05 + 0.12*(1-d))*flick);
+            ctx.fillRect(wx, wy, w2, h2);
+            
+            // occasional bright window
+            if(chance(0.05)){
+              ctx.save();
+              ctx.globalCompositeOperation = "screen";
+              ctx.fillStyle = rgba(col, 0.3);
+              ctx.fillRect(wx-1, wy-1, w2+2, h2+2);
+              ctx.restore();
+            }
+          }
+        }
+
+        // neon edge (front layers)
+        if(d > 0.55){
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+          ctx.strokeStyle = rgba(b.neon, 0.16);
+          ctx.lineWidth = 2;
+          ctx.shadowColor = rgba(b.neon, 0.25);
+          ctx.shadowBlur = 20;
+          ctx.strokeRect(x+1, y+1, b.w-2, b.h-2);
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  function drawBillboards(time){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    for(const b of billboards){
+      const flick = 0.55 + 0.45*Math.sin(time*0.0016*b.flick + b.phase);
+      const x = b.x + camX*1.9;
+      const y = b.y + camY*0.8;
+
+      // frame glow
+      ctx.fillStyle = rgba(b.c1, 0.10*flick);
+      ctx.shadowColor = rgba(b.c1, 0.35*flick);
+      ctx.shadowBlur = 26;
+      ctx.fillRect(x-b.w/2, y-b.h/2, b.w, b.h);
+
+      // inner gradient
+      const g = ctx.createLinearGradient(x-b.w/2, y, x+b.w/2, y);
+      g.addColorStop(0, rgba(b.c1, 0.16*flick));
+      g.addColorStop(1, rgba(b.c2, 0.12*flick));
+      ctx.fillStyle = g;
+      ctx.fillRect(x-b.w/2+4, y-b.h/2+4, b.w-8, b.h-8);
+
+      // text if exists
+      if(b.text){
+        ctx.save();
+        ctx.font = `bold ${Math.min(b.h*0.4, 24)}px monospace`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = rgba(P.ink ?? "#f6f2ff", 0.8*flick);
+        ctx.fillText(b.text, x, y);
+        ctx.restore();
+      } else {
+        // fake "glyphs"
+        const lines = rint(2, 5);
+        for(let i=0;i<lines;i++){
+          const yy = y - b.h*0.20 + i*(b.h/(lines+1));
+          ctx.strokeStyle = rgba(P.ink ?? "#f6f2ff", 0.10*flick);
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(x-b.w*0.35, yy);
+          ctx.lineTo(x+b.w*(0.10+rand(0,.30)), yy);
+          ctx.stroke();
+        }
+      }
+
+      // stand
+      ctx.strokeStyle = rgba(b.c1, 0.12);
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 0;
+      ctx.beginPath();
+      ctx.moveTo(x, y+b.h/2);
+      ctx.lineTo(x, y+b.h/2 + rand(30, 70));
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ground fog with pulse
+    const pulse = 0.5 + 0.5*Math.sin(time*0.0008);
+    const fog = ctx.createLinearGradient(0, horizon, 0, h);
+    fog.addColorStop(0, "rgba(0,0,0,0)");
+    fog.addColorStop(0.25, rgba(P.purple, 0.06 * pulse));
+    fog.addColorStop(1, "rgba(0,0,0,0.35)");
+    ctx.fillStyle = fog;
+    ctx.fillRect(0, horizon, w, h-horizon);
+  }
+
+  function drawRain(dt, time){
+    if(!rainEnabled) return;
+    
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    for(const d of rain){
+      d.y += d.sp * dt;
+      d.x += camX*0.05 + Math.sin(time*0.001 + d.y*0.01) * 0.5;
+      if(d.y > h + d.len){ d.y = -rand(20, h); d.x = rand(w); }
+
+      // Store trail for effect
+      d.trail.push({x: d.x, y: d.y});
+      if(d.trail.length > 5) d.trail.shift();
+
+      // Draw trail
+      for(let i=0;i<d.trail.length;i++){
+        const point = d.trail[i];
+        const alpha = d.a * (i/d.trail.length) * 0.5;
+        ctx.strokeStyle = rgba(d.c, alpha);
+        ctx.lineWidth = d.w * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);
+        const next = d.trail[i+1] || {x: d.x, y: d.y};
+        ctx.lineTo(next.x, next.y);
+        ctx.stroke();
+      }
+
+      // Main drop
+      ctx.strokeStyle = rgba(d.c, d.a);
+      ctx.lineWidth = d.w;
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x + 10, d.y + d.len);
+      ctx.stroke();
+      
+      // Splash effect at bottom
+      if(d.y > h - 50 && chance(0.01)){
+        for(let i=0;i<3;i++){
+          particles.push({
+            x: d.x,
+            y: h,
+            vx: rand(-2, 2),
+            vy: rand(-5, -2),
+            life: 30,
+            color: d.c,
+            size: rand(1, 3)
+          });
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawUFOs(time){
+    if(!ufoEnabled) return;
+    
+    const w = canvas.clientWidth;
+    
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    
+    for(const ufo of ufos){
+      // UFO movement
+      ufo.x += Math.sin(time*0.001 + ufo.phase) * ufo.speed;
+      ufo.y += Math.cos(time*0.001 * 0.7 + ufo.phase) * ufo.speed * 0.3;
+      
+      // Keep UFOs in bounds
+      if(ufo.x < -50) ufo.x = w + 50;
+      if(ufo.x > w + 50) ufo.x = -50;
+      if(ufo.y < 50) ufo.y = 50;
+      if(ufo.y > horizon * 0.7) ufo.y = horizon * 0.7;
+      
+      // Glow
+      const pulse = 0.7 + 0.3*Math.sin(time*0.005 + ufo.phase);
+      const glow = ctx.createRadialGradient(ufo.x, ufo.y, 0, ufo.x, ufo.y, ufo.r*1.5);
+      glow.addColorStop(0, rgba(ufo.color, 0.3 * pulse));
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(ufo.x, ufo.y, ufo.r*1.5, 0, TAU);
+      ctx.fill();
+      
+      // Main body
+      ctx.fillStyle = rgba(ufo.color, 0.8 * pulse);
+      ctx.beginPath();
+      ctx.arc(ufo.x, ufo.y, ufo.r, 0, TAU);
+      ctx.fill();
+      
+      // Dome
+      ctx.fillStyle = rgba(P.cyan, 0.6 * pulse);
+      ctx.beginPath();
+      ctx.arc(ufo.x, ufo.y, ufo.r*0.7, 0, Math.PI);
+      ctx.fill();
+      
+      // Lights
+      for(let i=0;i<8;i++){
+        const angle = (i/8)*TAU + time*0.01;
+        const lightX = ufo.x + Math.cos(angle)*ufo.r*0.9;
+        const lightY = ufo.y + Math.sin(angle)*ufo.r*0.9;
+        
+        ctx.fillStyle = rgba(pick([P.pink, P.cyan, P.green]), 0.8 * pulse);
+        ctx.beginPath();
+        ctx.arc(lightX, lightY, 3, 0, TAU);
         ctx.fill();
       }
-
-      // subtle “grain”
-      ctx.globalCompositeOperation="overlay";
-      ctx.fillStyle = `rgba(255,255,255,${grain})`;
-      for(let i=0;i<120;i++){
-        const x=rand()*W, y=rand()*H;
-        ctx.fillRect(x,y,1,1);
-      }
-
-      ctx.globalCompositeOperation="source-over";
-    }
-  };
-}
-
-// ---------- Scene 3: Moiré / Interference ----------
-function makeMoire(rand){
-  const hue0 = hashColorHue(rand);
-  const fade = lerp(0.06, 0.16, rand());
-  const density = 280 + (rand()*520|0);
-  const amp = lerp(8, 42, rand());
-  const freq = lerp(0.6, 2.6, rand());
-  let phase = rand()*1000;
-
-  function burst(){ phase += Math.PI * 10; }
-
-  return {
-    name:"Moiré Interference",
-    clear(){
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle="rgba(0,0,0,1)";
-      ctx.fillRect(0,0,W,H);
-    },
-    burst,
-    step(dt){
-      phase += Math.PI*0.0016*dt;
-
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle = `rgba(0,0,0,${fade})`;
-      ctx.fillRect(0,0,W,H);
-
-      ctx.globalCompositeOperation="lighter";
-      ctx.lineWidth = 1;
-
-      const cx = pointer.x, cy = pointer.y;
-      const base = (t*35 + hue0)%360;
-
-      for(let i=0;i<density;i++){
-        const u = i/density;
-        const x = u*W;
-        const y = H*0.5 + Math.sin((u*TAU*freq) + phase) * amp
-                        + Math.sin((u*TAU*(freq*1.7)) - phase*0.7) * (amp*0.45);
-
-        const dx = x - cx, dy = y - cy;
-        const d = Math.hypot(dx,dy)+1;
-        const twist = Math.sin(d*0.02 + phase*0.4) * 16;
-
-        const hue = (base + twist + u*120)%360;
-        ctx.strokeStyle = `hsla(${hue}, 90%, 60%, 0.28)`;
-
+      
+      // Beam
+      if(ufo.beam){
+        const beamPulse = 0.5 + 0.5*Math.sin(time*0.01);
+        const beam = ctx.createLinearGradient(ufo.x, ufo.y, ufo.x, ufo.y + ufo.beamLength);
+        beam.addColorStop(0, rgba(ufo.color, 0.4 * beamPulse));
+        beam.addColorStop(1, "rgba(0,0,0,0)");
+        
+        ctx.fillStyle = beam;
         ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x, y + 18 + 18*Math.sin(phase + u*12));
-        ctx.stroke();
-      }
-
-      ctx.globalCompositeOperation="source-over";
-    }
-  };
-}
-
-// ---------- Scene 4: Orbital Ribbons ----------
-function makeRibbons(rand){
-  const hue0 = hashColorHue(rand);
-  const fade = lerp(0.03, 0.10, rand());
-  const ribbons = 9 + (rand()*18|0);
-  const width = lerp(0.8, 2.8, rand());
-  const speed = lerp(0.5, 1.6, rand());
-  const wobble = lerp(0.6, 2.3, rand());
-  let phase = rand()*1000;
-
-  function burst(){ phase += Math.PI * 5; }
-
-  return {
-    name:"Orbital Ribbons",
-    clear(){
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle="rgba(0,0,0,1)";
-      ctx.fillRect(0,0,W,H);
-    },
-    burst,
-    step(dt){
-      phase += Math.PI*0.0018*dt;
-
-      ctx.globalCompositeOperation="source-over";
-      ctx.fillStyle = `rgba(0,0,0,${fade})`;
-      ctx.fillRect(0,0,W,H);
-
-      ctx.globalCompositeOperation="lighter";
-      ctx.lineWidth = width;
-
-      const cx = pointer.down ? pointer.x : W*0.5;
-      const cy = pointer.down ? pointer.y : H*0.5;
-
-      for(let r=0;r<ribbons;r++){
-        const k = r/(ribbons-1);
-        const rad = (Math.min(W,H)*0.12) + k*Math.min(W,H)*0.38;
-        const a0 = phase*(1+k*0.6) + t*(speed + k*0.9);
-
-        const hue = (hue0 + k*160 + t*22)%360;
-        ctx.strokeStyle = `hsla(${hue}, 95%, 62%, ${0.10 + k*0.16})`;
-
+        ctx.moveTo(ufo.x - ufo.r*0.5, ufo.y);
+        ctx.lineTo(ufo.x + ufo.r*0.5, ufo.y);
+        ctx.lineTo(ufo.x, ufo.y + ufo.beamLength);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Ground spot
+        ctx.fillStyle = rgba(ufo.color, 0.2 * beamPulse);
         ctx.beginPath();
-        for(let i=0;i<260;i++){
-          const u=i/259;
-          const a = a0 + u*TAU*(0.6 + k*0.7);
-          const w = 1 + 0.25*Math.sin(a*wobble + k*7);
-          const x = cx + Math.cos(a)*rad*w + Math.cos(a*2.1+phase)*rad*0.06;
-          const y = cy + Math.sin(a)*rad*w + Math.sin(a*1.9-phase)*rad*0.06;
-          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        }
-        ctx.stroke();
+        ctx.ellipse(ufo.x, ufo.y + ufo.beamLength, ufo.r, ufo.r*0.3, 0, 0, TAU);
+        ctx.fill();
       }
-
-      ctx.globalCompositeOperation="source-over";
-    }
-  };
-}
-
-// ---------- Universe generator ----------
-function newUniverse(){
-  clickCount++;
-
-  // “asla aynı olmasın” diye: time + click + entropy
-  const seedStr = [
-    "u",
-    Date.now().toString(36),
-    performance.now().toFixed(3),
-    clickCount.toString(36),
-    (Math.random()*1e9|0).toString(36)
-  ].join("-");
-
-  rng = makeRng(seedStr);
-  $seed.textContent = seedStr;
-
-  // Choose and blend: seeded selection
-  const pick = rng();
-  const sceneA = pick < 0.30 ? makeFlowField(rng)
-               : pick < 0.55 ? makeNebula(rng)
-               : pick < 0.78 ? makeMoire(rng)
-               : makeRibbons(rng);
-
-  // A “secondary” scene occasionally layered subtly
-  const pick2 = rng();
-  const sceneB = pick2 < 0.25 ? makeNebula(rng)
-               : pick2 < 0.50 ? makeRibbons(rng)
-               : pick2 < 0.75 ? makeMoire(rng)
-               : makeFlowField(rng);
-
-  const mix = rng() < 0.55; // sometimes combine
-  const modeName = mix ? `${sceneA.name} + ${sceneB.name}` : sceneA.name;
-  $mode.textContent = modeName;
-
-  universe = {
-    name: modeName,
-    burst(){
-      sceneA.burst?.();
-      if(mix) sceneB.burst?.();
-    },
-    clear(){
-      sceneA.clear?.();
-      if(mix){
-        // don't fully clear twice; add a subtle veil
-        ctx.globalCompositeOperation="source-over";
-        ctx.fillStyle="rgba(0,0,0,0.35)";
-        ctx.fillRect(0,0,W,H);
-      }
-    },
-    step(dt){
-      sceneA.step(dt);
-      if(mix){
-        // subtle second layer
-        ctx.save();
-        ctx.globalAlpha = 0.55;
-        sceneB.step(dt);
-        ctx.restore();
+      
+      // Occasional particle trail
+      if(chance(0.02)){
+        particles.push({
+          x: ufo.x,
+          y: ufo.y + ufo.r,
+          vx: rand(-0.5, 0.5),
+          vy: rand(1, 3),
+          life: 40,
+          color: ufo.color,
+          size: 2
+        });
       }
     }
-  };
+    ctx.restore();
+  }
 
-  universe.clear();
-}
+  function drawLightBeams(time){
+    if(!beamsEnabled) return;
+    
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    
+    for(const beam of lightBeams){
+      beam.angle += beam.speed;
+      
+      const x1 = beam.x;
+      const y1 = beam.y;
+      const x2 = beam.x + Math.cos(beam.angle) * beam.length;
+      const y2 = beam.y - beam.length;
+      const x3 = beam.x + Math.cos(beam.angle + beam.width/beam.length) * beam.length;
+      const y3 = beam.y - beam.length;
+      
+      // Beam
+      const grd = ctx.createLinearGradient(x1, y1, x2, y2);
+      grd.addColorStop(0, rgba(beam.color, beam.alpha));
+      grd.addColorStop(1, "rgba(0,0,0,0)");
+      
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x3, y3);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Source glow
+      ctx.fillStyle = rgba(beam.color, 0.3);
+      ctx.beginPath();
+      ctx.arc(beam.x, beam.y, 10, 0, TAU);
+      ctx.fill();
+      
+      // Occasional particles in beam
+      if(chance(0.05)){
+        const t = rand();
+        const px = lerp(x1, x2, t);
+        const py = lerp(y1, y2, t);
+        
+        particles.push({
+          x: px,
+          y: py,
+          vx: 0,
+          vy: rand(-2, -1),
+          life: 30,
+          color: beam.color,
+          size: rand(1, 2)
+        });
+      }
+    }
+    ctx.restore();
+  }
 
-newUniverse();
+  function drawFlyingTexts(dt){
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    
+    for(let i = flyingTexts.length - 1; i >= 0; i--){
+      const text = flyingTexts[i];
+      text.y -= text.speed;
+      text.life -= 1;
+      text.alpha *= 0.995;
+      
+      if(text.life <= 0 || text.alpha < 0.1){
+        flyingTexts.splice(i, 1);
+        continue;
+      }
+      
+      ctx.font = `bold ${text.size}px monospace`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = rgba(text.color, text.alpha);
+      ctx.shadowColor = rgba(text.color, text.alpha * 0.7);
+      ctx.shadowBlur = 10;
+      ctx.fillText(text.text, text.x, text.y);
+      
+      // Trail particles
+      if(chance(0.3)){
+        particles.push({
+          x: text.x + rand(-text.text.length*3, text.text.length*3),
+          y: text.y,
+          vx: rand(-0.5, 0.5),
+          vy: rand(0.5, 2),
+          life: 20,
+          color: text.color,
+          size: 1
+        });
+      }
+    }
+    ctx.restore();
+  }
 
-// ---------- Controls ----------
-$gen.addEventListener("click", newUniverse);
+  function drawParticles(dt){
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    
+    for(let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 1;
+      p.size *= 0.98;
+      
+      if(p.life <= 0 || p.size < 0.1){
+        particles.splice(i, 1);
+        continue;
+      }
+      
+      ctx.fillStyle = rgba(p.color, p.life/100);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
 
-addEventListener("keydown", (e)=>{
-  if(e.code==="Space") universe?.burst?.();
-  if(e.key.toLowerCase()==="r") universe?.clear?.();
-});
+  function postFX(time){
+    if(!fxOn) return;
 
-// ---------- Main loop ----------
-let last = performance.now();
-function frame(now){
-  const dt = clamp((now - last) / 16.6667, 0.25, 2.5);
-  last = now;
-  t += 0.013 * dt;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
 
-  // safety: if resized, keep universe stable
-  // (no auto-regeneration; you control with button)
-  universe?.step(dt);
+    // scanlines with curvature
+    ctx.save();
+    ctx.globalCompositeOperation = "overlay";
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = "rgba(0,0,0,0.22)";
+    const lineH = 3;
+    const shift = Math.floor((time*0.06) % (lineH*2));
+    for(let y=shift; y<h; y+=lineH*2){
+      // Curved scanline effect
+      const curve = Math.sin(y/h * Math.PI) * 2;
+      ctx.fillRect(curve, y, w - curve*2, lineH);
+    }
+    ctx.restore();
 
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
+    // subtle chromatic aberration (fake)
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.20;
+    ctx.drawImage(canvas, -1, 0);
+    ctx.globalAlpha = 0.10;
+    ctx.drawImage(canvas, 1, 0);
+    ctx.globalAlpha = 0.05;
+    ctx.drawImage(canvas, 0, -1);
+    ctx.restore();
+
+    // occasional glitch effect
+    if(chance(0.005)){
+      glitches.push({
+        x: rand(w),
+        y: rand(h),
+        w: rand(50, 200),
+        h: rand(5, 20),
+        life: 10,
+        color: pick([P.pink, P.cyan, P.green])
+      });
+    }
+    
+    // draw glitches
+    ctx.save();
+    for(const glitch of glitches){
+      ctx.globalAlpha = glitch.life/10;
+      ctx.fillStyle = glitch.color;
+      ctx.fillRect(glitch.x, glitch.y, glitch.w, glitch.h);
+      glitch.life -= 1;
+    }
+    // Remove dead glitches
+    glitches = glitches.filter(g => g.life > 0);
+    ctx.restore();
+
+    // dynamic vignette
+    const pulse = 0.5 + 0.5*Math.sin(time*0.0007);
+    ctx.save();
+    const v = ctx.createRadialGradient(w*0.5,h*0.45, 50, w*0.5,h*0.45, Math.max(w,h)*0.78);
+    v.addColorStop(0, "rgba(0,0,0,0)");
+    v.addColorStop(1, `rgba(0,0,0,${0.55 * pulse})`);
+    ctx.fillStyle = v;
+    ctx.fillRect(0,0,w,h);
+    ctx.restore();
+  }
+
+  function bloomPass(){
+    if(!fxOn) return;
+    // cheap bloom: blur-ish by scaling down/up on offscreen
+    const w = canvas.width, h = canvas.height;
+    const s = 0.33; // scale
+    const sw = Math.max(1, Math.floor(w*s));
+    const sh = Math.max(1, Math.floor(h*s));
+
+    // draw scaled down
+    const tmp = document.createElement("canvas");
+    tmp.width = sw; tmp.height = sh;
+    const tctx = tmp.getContext("2d");
+    tctx.drawImage(canvas, 0, 0, sw, sh);
+
+    // upsample multiple times
+    ctx.save();
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = 0.18;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(tmp, 0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.globalAlpha = 0.10;
+    ctx.drawImage(tmp, 0, 0, canvas.clientWidth, canvas.clientHeight);
+    ctx.restore();
+  }
+
+  // ---------- Main loop ----------
+  let lastT = performance.now();
+  function loop(t){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const dt = Math.min(0.033, (t-lastT)/1000);
+    lastT = t;
+
+    // smooth camera drift to mouse + drag
+    const targetX = (mx - 0.5) * 28 + camBase.x;
+    const targetY = (my - 0.5) * 18 + camBase.y;
+    camX = lerp(camX, targetX, 0.06);
+    camY = lerp(camY, targetY, 0.06);
+
+    // "beat" pulse
+    beat += dt * (1.1 + 0.6*Math.sin(t*0.001));
+    const beatPulse = 0.5 + 0.5*Math.sin(beat*TAU);
+
+    // clear
+    ctx.clearRect(0,0,w,h);
+
+    // background & stars
+    bgGradient(w,h);
+    drawStars(t);
+
+    // sun
+    drawSun(w,h,t);
+
+    // skyline
+    drawBuildings(t);
+
+    // grid floor
+    drawGrid(w,h,t);
+
+    // billboards / fog
+    drawBillboards(t);
+
+    // UFOs
+    drawUFOs(t);
+
+    // Light beams
+    drawLightBeams(t);
+
+    // rain
+    drawRain(dt, t);
+
+    // Flying texts
+    drawFlyingTexts(dt);
+
+    // Particles
+    drawParticles(dt);
+
+    // glow bloom + scanlines
+    bloomPass();
+    postFX(t);
+
+    // HUD fps
+    frames++;
+    if(t - lastFpsT > 450){
+      const fps = Math.round((frames*1000)/(t-lastFpsT));
+      fpsEl.textContent = fps + " fps";
+      frames = 0; lastFpsT = t;
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Export ----------
+  function savePng(){
+    const a = document.createElement("a");
+    a.download = `neon_city_pro_${seedStr}.png`;
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+    addEvent("PNG kaydedildi: " + seedStr);
+  }
+
+  // ---------- Regenerate ----------
+  function regenerate(forcedSeed){
+    const u = forcedSeed ?? urlSeed();
+    seedStr = u ? String(u) : (Math.floor(Math.random()*1e9) + "-" + Date.now().toString(16));
+    rng = makeRng(seedStr);
+
+    seedLabel.textContent = "seed: " + seedStr;
+
+    genCity();
+  }
+
+  // ---------- Add random elements ----------
+  function addRandomUFO(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    ufos.push({
+      x: rand(w),
+      y: rand(h*0.1, horizon*0.7),
+      r: rand(20, 60),
+      speed: rand(0.5, 2.0),
+      phase: rand(TAU),
+      color: pick([P.cyan, P.pink, P.green, P.sun, P.orange]),
+      beam: chance(0.5),
+      beamLength: rand(100, 300)
+    });
+    addEvent("Yeni UFO eklendi");
+  }
+
+  function addRandomBeam(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    lightBeams.push({
+      x: rand(w),
+      y: h,
+      angle: rand(TAU),
+      speed: rand(0.01, 0.03),
+      width: rand(20, 50),
+      length: rand(300, 600),
+      color: pick([P.cyan, P.pink, P.green, P.sun, P.purple]),
+      alpha: rand(0.1, 0.2)
+    });
+    addEvent("Yeni ışık hüzmesi eklendi");
+  }
+
+  function addRandomText(){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    flyingTexts.push({
+      x: rand(w),
+      y: h + 50,
+      text: pick(["RETRO", "SYNTH", "WAVE", "1984", "CYBER", "NEON", "DREAM", "NIGHT", "FUTURE", "PAST", "GLOW", "PULSE"]),
+      speed: rand(0.5, 2.0),
+      size: rand(20, 50),
+      color: pick([P.cyan, P.pink, P.green, P.sun, P.orange, P.purple]),
+      alpha: rand(0.5, 0.9),
+      life: rand(100, 300)
+    });
+    addEvent("Yeni uçan metin eklendi");
+  }
+
+  function randomizeAll(){
+    // Random palette
+    P = pick(PALETTES);
+    setCss(P);
+    
+    // Random density
+    density = rand(0.5, 2.0);
+    densitySlider.value = density;
+    
+    // Random toggles
+    rainEnabled = chance(0.7);
+    ufoEnabled = chance(0.8);
+    beamsEnabled = chance(0.9);
+    
+    rainToggle.classList.toggle("active", rainEnabled);
+    ufoToggle.classList.toggle("active", ufoEnabled);
+    beamToggle.classList.toggle("active", beamsEnabled);
+    
+    // Regenerate with current seed
+    genCity();
+    
+    // Add random elements
+    if(chance(0.5)) addRandomUFO();
+    if(chance(0.5)) addRandomBeam();
+    if(chance(0.3)) addRandomText();
+    
+    addEvent("Rastgele şehir oluşturuldu");
+  }
+
+  // ---------- Input ----------
+  window.addEventListener("resize", () => { fit(); genCity(); });
+
+  window.addEventListener("mousemove", (e) => {
+    const r = canvas.getBoundingClientRect();
+    mx = (e.clientX - r.left) / r.width;
+    my = (e.clientY - r.top) / r.height;
+  });
+
+  canvas.addEventListener("mousedown", (e) => {
+    dragging = true;
+    dragStart.x = e.clientX; dragStart.y = e.clientY;
+    camBase.x = camX; camBase.y = camY;
+  });
+  window.addEventListener("mouseup", () => dragging = false);
+  window.addEventListener("mousemove", (e) => {
+    if(!dragging) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+    camBase.x = camX + dx*0.05;
+    camBase.y = camY + dy*0.05;
+  });
+
+  regenBtn.addEventListener("click", () => regenerate());
+  toggleBtn.addEventListener("click", () => {
+    fxOn = !fxOn;
+    toggleBtn.textContent = "FX: " + (fxOn ? "ON" : "OFF");
+    addEvent("FX " + (fxOn ? "açıldı" : "kapandı"));
+  });
+  randomizeBtn.addEventListener("click", randomizeAll);
+  saveBtn.addEventListener("click", savePng);
+
+  densitySlider.addEventListener("input", (e) => {
+    density = parseFloat(e.target.value);
+    genCity();
+  });
+
+  rainToggle.addEventListener("click", () => {
+    rainEnabled = !rainEnabled;
+    rainToggle.classList.toggle("active", rainEnabled);
+    addEvent("Yağmur " + (rainEnabled ? "açıldı" : "kapandı"));
+  });
+  
+  ufoToggle.addEventListener("click", () => {
+    ufoEnabled = !ufoEnabled;
+    ufoToggle.classList.toggle("active", ufoEnabled);
+    addEvent("UFO'lar " + (ufoEnabled ? "açıldı" : "kapandı"));
+  });
+  
+  beamToggle.addEventListener("click", () => {
+    beamsEnabled = !beamsEnabled;
+    beamToggle.classList.toggle("active", beamsEnabled);
+    addEvent("Işık hüzmeleri " + (beamsEnabled ? "açıldı" : "kapandı"));
+  });
+
+  addUFOBtn.addEventListener("click", addRandomUFO);
+  addBeamBtn.addEventListener("click", addRandomBeam);
+
+  window.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if(k === "r") regenerate();
+    if(k === "s") savePng();
+    if(k === " ") { // Space bar for random text
+      addRandomText();
+      e.preventDefault();
+    }
+    if(k === "u") addRandomUFO();
+    if(k === "b") addRandomBeam();
+  });
+
+  // ---------- Start ----------
+  fit();
+  regenerate(urlSeed());
+  
+  // Add initial random elements
+  setTimeout(() => {
+    if(chance(0.7)) addRandomUFO();
+    if(chance(0.5)) addRandomBeam();
+    if(chance(0.3)) addRandomText();
+  }, 1000);
+  
+  requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>
