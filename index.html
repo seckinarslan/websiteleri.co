@@ -691,17 +691,25 @@
 
           <!-- Participants Selection -->
           <div class="participants-section">
-            <label>Katılımcılar ve Ödeyen Kişi *</label>
-            <div class="hint mb-2">Katılımcıları seçin ve ödeyen kişiyi belirleyin</div>
-            <div id="participantsContainer" class="participants-grid">
-              <!-- Participants will be loaded here -->
+            <label>Katılımcılar *</label>
+            <div class="hint mb-2">Katılımcıları seçin</div>
+            <div id="participantsContainer" class="participants-grid"></div>
+
+            <div class="field mt-2">
+              <label for="payerSelect">Ödeyen Kişi *</label>
+              <select id="payerSelect">
+                <option value="">— Seç —</option>
+              </select>
+              <div class="hint">Ödeyen kişi listeden seçilir (mobil uyumlu)</div>
             </div>
+
             <div class="flex-row mt-2">
               <button type="button" id="selectAllParticipants">Hepsini Seç</button>
               <button type="button" id="clearSelection">Seçimi Temizle</button>
               <div class="pill" id="selectedCount">0 katılımcı seçildi</div>
             </div>
           </div>
+
 
           <div class="field">
             <label>Manuel Katılımcı Ekle (opsiyonel)</label>
@@ -841,6 +849,7 @@
       measurementId: "G-9V22FDX9N0"
     };
 
+    const payerSelect = document.getElementById("payerSelect");
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -920,10 +929,13 @@
       return d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute:"2-digit" });
     }
 
-    function formatDateOnly(ts) {
-      if (!ts?.toDate) return "";
-      return ts.toDate().toLocaleDateString("tr-TR");
+    function formatDateAny(x) {
+      if (!x) return "";
+      if (typeof x === "string") return x.split("-").reverse().join(".");
+      if (x?.toDate) return x.toDate().toLocaleDateString("tr-TR");
+      return "";
     }
+
 
     // ----- USERS
     async function upsertUser(user) {
@@ -1064,6 +1076,8 @@
         addManualParticipantItem(name, index);
       });
       
+      updateSelectedCount();
+      renderPayerOptions();
       updateSelectedCount();
     }
 
@@ -1345,7 +1359,7 @@
           </div>
           <div class="expense-details">
             <div class="expense-meta">
-              <div>📅 ${esc(formatDateOnly(expense.date) || formatDateOnly(expense.createdAt))}</div>
+              <div>📅 ${esc(formatDateAny(expense.date) || formatDateAny(expense.createdAt))}</div>
               <div>🏷️ ${esc(getCategoryLabel(expense.category))}</div>
               <div>👤 ${esc(expense.payerName || '')} ödedi</div>
             </div>
@@ -1386,6 +1400,11 @@
 
     refreshExpensesBtn.addEventListener('click', loadExpenses);
     filterCategory.addEventListener('change', renderExpensesList);
+    payerSelect?.addEventListener("change", () => {
+      payerId = payerSelect.value || null;
+      updateSelectedCount();
+    });
+
 
     function showExpenseDetail(expenseId) {
       const expense = allExpenses.find(e => e.id === expenseId);
@@ -1413,7 +1432,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
           <div>
             <div style="font-size: 0.85rem; opacity: 0.8;">Tarih</div>
-            <div>${esc(formatDateOnly(expense.date) || formatDateOnly(expense.createdAt))}</div>
+            <div>${esc(formatDateAny(expense.date) || formatDateAny(expense.createdAt))}</div>
           </div>
           <div>
             <div style="font-size: 0.85rem; opacity: 0.8;">Kategori</div>
@@ -1515,10 +1534,19 @@
         });
 
         // Payer gets credit
-        const payerId = expense.payer;
-        if (payerId) {
-          balances[payerId] = (balances[payerId] || 0) + expense.amount;
+        const rawPayer = expense.payer;
+        let payerKey = rawPayer;
+
+        if (rawPayer?.startsWith?.("manual_")) {
+          const idx = parseInt(rawPayer.split("_")[1], 10);
+          // expense içinde manual isim var: payerName
+          payerKey = expense.payerName || `manual_${idx}`;
         }
+
+        if (payerKey) {
+          balances[payerKey] = (balances[payerKey] || 0) + expense.amount;
+        }
+
 
         // Participants get debt
         const participantCount = expense.participants?.length || 1;
@@ -1671,6 +1699,47 @@
         await loadExpenses();
       }
     });
+    
+    function renderPayerOptions() {
+      if (!payerSelect) return;
+
+      const current = payerSelect.value;
+      payerSelect.innerHTML = `<option value="">— Seç —</option>`;
+
+      // sadece seçili katılımcılardan ödeyen seçtir
+      const options = [];
+
+      selectedParticipants.forEach(id => {
+        if (id.startsWith("manual_")) {
+          const idx = parseInt(id.split("_")[1], 10);
+          options.push({ id, name: manualParticipants[idx] || "manuel" });
+        } else {
+          const u = usersCache.find(x => x.uid === id);
+          options.push({ id, name: u?.displayName || u?.email || id });
+        }
+      });
+
+      options
+        .sort((a,b) => a.name.localeCompare(b.name, "tr"))
+        .forEach(o => {
+          const opt = document.createElement("option");
+          opt.value = o.id;
+          opt.textContent = o.name;
+          payerSelect.appendChild(opt);
+        });
+
+      // daha önce seçiliyse koru, yoksa sıfırla
+      if ([...selectedParticipants].includes(current)) {
+        payerSelect.value = current;
+        payerId = current;
+      } else {
+        payerSelect.value = "";
+        payerId = null;
+      }
+    }
+
+
+
   </script>
 </body>
 </html>
