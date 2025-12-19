@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chat + Mahsuplaşma</title>
+  <title>Chat + Gelişmiş Mahsuplaşma</title>
   <style>
     :root {
       --primary-bg: #0b0f17;
@@ -18,22 +18,26 @@
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-full: 999px;
+      --accent: #4dabf7;
+      --accent-green: #51cf66;
+      --accent-red: #ff6b6b;
+      --accent-yellow: #ffd43b;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, sans-serif;
-      margin: 0;
       background: var(--primary-bg);
       color: var(--text-color);
       min-height: 100vh;
     }
     .wrap {
-      max-width: 980px;
+      max-width: 1200px;
       margin: 0 auto;
       padding: 12px;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      gap: 12px;
     }
     .top {
       display: flex;
@@ -43,7 +47,13 @@
       flex-wrap: wrap;
       padding: 8px 0;
     }
-    .top h2 { margin: 0; font-size: 1.2rem; }
+    .top h2 { 
+      margin: 0; 
+      font-size: 1.2rem; 
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
     .auth-section {
       display: flex;
       gap: 8px;
@@ -61,9 +71,32 @@
       font-size: 0.9rem;
       white-space: nowrap;
       transition: all 0.2s ease;
+      font-weight: 500;
     }
-    button:hover:not(:disabled) { background: rgba(255,255,255,.09); }
-    button:disabled { opacity: .5; cursor: not-allowed; }
+    button:hover:not(:disabled) { 
+      background: rgba(255,255,255,.09); 
+      transform: translateY(-1px);
+    }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { 
+      opacity: .5; 
+      cursor: not-allowed; 
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    button.success {
+      background: var(--accent-green);
+      border-color: var(--accent-green);
+      color: white;
+    }
+    button.danger {
+      background: var(--accent-red);
+      border-color: var(--accent-red);
+      color: white;
+    }
     .pill {
       padding: 6px 10px;
       border: 1px solid var(--border-light);
@@ -75,13 +108,25 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,.08);
+      font-size: 0.85rem;
+      border: 1px solid transparent;
+    }
+    .chip.user { border-color: var(--accent); }
+    .chip.manual { border-color: var(--accent-green); }
+    .chip.payer { border-color: var(--accent-yellow); }
 
     /* CHAT */
     .chat {
       flex: 1;
       display: flex;
       flex-direction: column;
-      margin-top: 12px;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       overflow: hidden;
@@ -105,7 +150,11 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-    .me { align-self: flex-end; background: var(--my-message-bg); border-color: rgba(120, 160, 255, .2); }
+    .me { 
+      align-self: flex-end; 
+      background: var(--my-message-bg); 
+      border-color: rgba(120, 160, 255, .2); 
+    }
     .meta {
       font-size: 0.8rem;
       opacity: .7;
@@ -114,9 +163,15 @@
       justify-content: space-between;
       gap: 10px;
     }
-    .time { font-size: 0.75rem; opacity: 0.65; }
-    .msg-content { line-height: 1.35; }
-
+    .time { 
+      font-size: 0.75rem; 
+      opacity: 0.65; 
+      white-space: nowrap;
+    }
+    .msg-content { 
+      line-height: 1.35; 
+      word-break: break-word;
+    }
     form.chatbar {
       display: flex;
       gap: 10px;
@@ -133,74 +188,442 @@
       padding: 12px;
       outline: none;
       font-size: 1rem;
+      font-family: inherit;
     }
-    input { flex: 1; min-width: 0; }
-    input::placeholder, textarea::placeholder { color: rgba(231,238,252,0.6); }
+    input, textarea {
+      flex: 1;
+      min-width: 0;
+    }
+    input::placeholder, textarea::placeholder { 
+      color: rgba(231,238,252,0.6); 
+    }
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 20px;
+      padding-right: 40px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
 
-    /* SETTLEMENT */
+    /* SETTLEMENT IMPROVED */
+    .settlement-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
     .panel {
-      margin-top: 12px;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
       overflow: hidden;
       background: var(--secondary-bg);
     }
     .panel-header {
-      padding: 12px;
+      padding: 14px;
       border-bottom: 1px solid var(--border-light);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+      background: rgba(0,0,0,.1);
     }
-    .panel-body { padding: 12px; display: grid; gap: 10px; }
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .label { font-size: 0.85rem; opacity: .8; margin-bottom: 6px; }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    textarea { min-height: 90px; resize: vertical; }
-
-    .hint { opacity: .75; font-size: 0.85rem; line-height: 1.35; }
-
-    .list {
-      margin-top: 12px;
-      border-top: 1px solid var(--border-light);
-      padding-top: 12px;
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .panel-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+    .panel-body { 
+      padding: 14px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 14px; 
+    }
+    .grid-responsive {
       display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field label {
+      font-size: 0.85rem;
+      opacity: .8;
+      font-weight: 500;
+    }
+    textarea { 
+      min-height: 100px; 
+      resize: vertical; 
+      line-height: 1.4;
+    }
+    .hint { 
+      opacity: .75; 
+      font-size: 0.85rem; 
+      line-height: 1.35; 
+      font-style: italic;
+    }
+    .flex-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .flex-row button { flex-shrink: 0; }
+
+    /* Participants Selection */
+    .participants-section {
+      display: flex;
+      flex-direction: column;
       gap: 10px;
     }
-    .card {
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 12px;
-      background: rgba(255,255,255,.03);
+    .participants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
     }
-    .card-title { display:flex; justify-content:space-between; gap:10px; align-items:center; }
-    .card-title strong { font-size: 1rem; }
-    .badge {
-      font-size: 0.75rem;
-      opacity: .8;
+    .participant-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
       border: 1px solid var(--border-light);
-      border-radius: var(--radius-full);
-      padding: 4px 8px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,.03);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .participant-item:hover {
+      background: rgba(255,255,255,.06);
+      border-color: var(--accent);
+    }
+    .participant-item.selected {
+      background: rgba(77, 171, 247, 0.15);
+      border-color: var(--accent);
+    }
+    .participant-item.payer {
+      background: rgba(255, 212, 59, 0.15);
+      border-color: var(--accent-yellow);
+    }
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .participant-item.selected .checkbox {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .participant-item.payer .checkbox {
+      background: var(--accent-yellow);
+      border-color: var(--accent-yellow);
+    }
+    .checkbox::after {
+      content: "✓";
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .participant-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .role-badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255,255,255,.1);
+      white-space: nowrap;
     }
 
-    @media (max-width: 720px) {
-      .grid2 { grid-template-columns: 1fr; }
+    /* Expenses List */
+    .expenses-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .expense-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      background: rgba(255,255,255,.03);
+      transition: all 0.2s;
+    }
+    .expense-card:hover {
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.15);
+    }
+    .expense-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .expense-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text-color);
+    }
+    .expense-amount {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--accent-green);
+    }
+    .expense-details {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .expense-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    .expense-note {
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(0,0,0,.2);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .expense-participants {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .settlement-stats {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(0,0,0,.15);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .stat-item {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border-light);
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .stat-value.positive { color: var(--accent-green); }
+    .stat-value.negative { color: var(--accent-red); }
+    .balance-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .balance-table th,
+    .balance-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .balance-table th {
+      font-weight: 600;
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+    .balance-table tr:last-child td {
+      border-bottom: none;
+    }
+    .amount-cell {
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .amount-cell.positive { color: var(--accent-green); }
+    .amount-cell.negative { color: var(--accent-red); }
+    .amount-cell.neutral { opacity: 0.7; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal {
+      background: var(--primary-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 16px;
+    }
+    .modal-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .wrap {
+        padding: 8px;
+        gap: 8px;
+      }
+      .top h2 {
+        font-size: 1rem;
+      }
+      button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+      }
+      .panel-header, .panel-body {
+        padding: 12px;
+      }
+      .participants-grid {
+        grid-template-columns: 1fr;
+      }
+      .expense-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .expense-meta {
+        flex-direction: column;
+        gap: 6px;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      .grid-responsive {
+        grid-template-columns: 1fr;
+      }
+      form.chatbar {
+        padding: 10px;
+      }
+      .modal {
+        max-height: 95vh;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .top {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .auth-section {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .modal-overlay {
+        padding: 10px;
+      }
+    }
+
+    /* Utility */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .mt-2 { margin-top: 8px; }
+    .mb-2 { margin-bottom: 8px; }
+    .gap-2 { gap: 8px; }
+    .full-width { width: 100%; }
+    .cursor-pointer { cursor: pointer; }
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+      position: relative;
+    }
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-light);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="top">
-      <h2 id="pageTitle">Chat</h2>
+      <h2 id="pageTitle">Chat & Mahsuplaşma</h2>
 
       <div class="auth-section">
-        <button id="openSettlement" type="button" style="display:none;">Mahsuplaşma (Yeni Sekme)</button>
-        <button id="openChat" type="button" style="display:none;">Chat (Yeni Sekme)</button>
+        <button id="openSettlement" type="button" style="display:none;" class="primary">
+          Mahsuplaşma (Yeni Sekme)
+        </button>
+        <button id="openChat" type="button" style="display:none;" class="primary">
+          Chat (Yeni Sekme)
+        </button>
 
-        <button id="login" type="button">Google ile giriş</button>
-        <button id="logout" type="button" style="display:none;">Çıkış</button>
+        <button id="login" type="button" class="success">Google ile giriş</button>
+        <button id="logout" type="button" style="display:none;" class="danger">Çıkış</button>
         <div class="pill" id="status">Giriş bekleniyor…</div>
       </div>
     </div>
@@ -215,66 +638,184 @@
     </div>
 
     <!-- SETTLEMENT VIEW -->
-    <div class="panel" id="settlementView" style="display:none;">
-      <div class="panel-header">
-        <div>
-          <div style="font-size:1.05rem; font-weight:700;">Mahsuplaşma</div>
-          <div class="hint">Fiyat / kullanım / katılımcılar tanımla. Chat ayrı sekmede açık kalabilir.</div>
-        </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button id="backToChatLocal" type="button">Chat’e dön</button>
-        </div>
-      </div>
-
-      <div class="panel-body">
-        <div class="grid2">
-          <div class="field">
-            <div class="label">Başlık</div>
-            <input id="stTitle" placeholder="Örn: Akşam Yemeği" maxlength="80" />
+    <div class="settlement-container" id="settlementView" style="display:none;">
+      <!-- Add Expense Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Yeni Harcama Ekle</div>
+            <div class="panel-subtitle">Ortak harcamaları kaydedin ve takip edin</div>
           </div>
-
-          <div class="grid2">
+        </div>
+        <div class="panel-body">
+          <div class="grid-responsive">
             <div class="field">
-              <div class="label">Toplam Fiyat</div>
-              <input id="stPrice" type="number" inputmode="decimal" placeholder="Örn: 1250" />
+              <label for="stTitle">Harcama Başlığı *</label>
+              <input id="stTitle" placeholder="Örn: Akşam Yemeği, Market Alışverişi" maxlength="80" />
             </div>
             <div class="field">
-              <div class="label">Para Birimi</div>
-              <select id="stCurrency">
-                <option value="TRY">TRY</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
+              <label for="stAmount">Tutar *</label>
+              <div class="flex-row">
+                <input id="stAmount" type="number" inputmode="decimal" placeholder="Örn: 1250" style="flex: 1;" />
+                <select id="stCurrency" style="width: 100px;">
+                  <option value="TRY">₺ TRY</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-responsive">
+            <div class="field">
+              <label for="stDate">Tarih</label>
+              <input id="stDate" type="date" />
+            </div>
+            <div class="field">
+              <label>Harcama Türü</label>
+              <select id="stCategory">
+                <option value="yemek">🍽️ Yemek</option>
+                <option value="market">🛒 Market</option>
+                <option value="ulasim">🚗 Ulaşım</option>
+                <option value="eglence">🎉 Eğlence</option>
+                <option value="konaklama">🏨 Konaklama</option>
+                <option value="diger">📦 Diğer</option>
               </select>
             </div>
           </div>
-        </div>
 
-        <div class="field">
-          <div class="label">Kullanım / Not</div>
-          <textarea id="stNote" placeholder="Örn: 4 kişi, kişi başı paylaşılacak. Kim ne ödedi vs."></textarea>
-        </div>
-
-        <div class="grid2">
           <div class="field">
-            <div class="label">Katılımcılar (çoklu seç)</div>
-            <select id="stParticipants" multiple size="6"></select>
-            <div class="hint">Listede kullanıcı görünmesi için en az 1 kez Google ile giriş yapmış olmalı.</div>
+            <label for="stNote">Açıklama / Notlar</label>
+            <textarea id="stNote" placeholder="Detaylar, özel notlar, vs."></textarea>
+          </div>
+
+          <!-- Participants Selection -->
+          <div class="participants-section">
+            <label>Katılımcılar ve Ödeyen Kişi *</label>
+            <div class="hint mb-2">Katılımcıları seçin ve ödeyen kişiyi belirleyin</div>
+            <div id="participantsContainer" class="participants-grid">
+              <!-- Participants will be loaded here -->
+            </div>
+            <div class="flex-row mt-2">
+              <button type="button" id="selectAllParticipants">Hepsini Seç</button>
+              <button type="button" id="clearSelection">Seçimi Temizle</button>
+              <div class="pill" id="selectedCount">0 katılımcı seçildi</div>
+            </div>
           </div>
 
           <div class="field">
-            <div class="label">Hızlı ekleme</div>
-            <input id="stManualName" placeholder="Listede yoksa isim yaz (opsiyonel)" maxlength="60" />
-            <button id="addManualParticipant" type="button">Bu ismi katılımcılara ekle</button>
-            <div class="hint">Bu “gerçek kullanıcı” değildir. Sadece kayıt için isim listesine ekler.</div>
+            <label>Manuel Katılımcı Ekle (opsiyonel)</label>
+            <div class="flex-row">
+              <input id="stManualName" placeholder="Listede yoksa isim girin" maxlength="60" />
+              <button type="button" id="addManualParticipant">Ekle</button>
+            </div>
+            <div class="hint">Bu kişi sadece bu harcama için eklenecek</div>
+          </div>
+
+          <div class="flex-row">
+            <button id="saveExpense" type="button" disabled class="primary">Harcamayı Kaydet</button>
+            <button id="clearForm" type="button">Formu Temizle</button>
+            <div class="pill" id="stStatus">Hazır</div>
           </div>
         </div>
+      </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-          <button id="saveSettlement" type="button" disabled>Kaydet</button>
-          <div class="pill" id="stStatus">Hazır</div>
+      <!-- Expenses List -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Harcama Geçmişi</div>
+            <div class="panel-subtitle" id="expensesCount">0 harcama bulundu</div>
+          </div>
+          <div class="flex-row">
+            <button id="refreshExpenses" type="button">Yenile</button>
+            <select id="filterCategory">
+              <option value="">Tüm Kategoriler</option>
+              <option value="yemek">Yemek</option>
+              <option value="market">Market</option>
+              <option value="ulasim">Ulaşım</option>
+              <option value="eglence">Eğlence</option>
+              <option value="konaklama">Konaklama</option>
+              <option value="diger">Diğer</option>
+            </select>
+          </div>
         </div>
+        <div class="panel-body">
+          <div id="expensesList" class="expenses-list">
+            <!-- Expenses will be loaded here -->
+          </div>
+        </div>
+      </div>
 
-        <div class="list" id="settlementList"></div>
+      <!-- Settlement Summary -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Mahsuplaşma Özeti</div>
+            <div class="panel-subtitle">Kim ne kadar ödedi, kim ne kadar borçlu</div>
+          </div>
+          <button id="calculateSettlement" type="button" class="success">Hesapla</button>
+        </div>
+        <div class="panel-body">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Toplam Harcama</div>
+              <div class="stat-value" id="totalExpense">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Harcama Sayısı</div>
+              <div class="stat-value" id="expenseCount">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Katılımcı Sayısı</div>
+              <div class="stat-value" id="participantCount">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Kişi Başı Ortalama</div>
+              <div class="stat-value" id="averagePerPerson">0</div>
+            </div>
+          </div>
+
+          <div class="settlement-stats mt-2">
+            <div style="font-weight: 600; margin-bottom: 12px;">Borç/Alacak Durumu</div>
+            <div id="balanceTableContainer">
+              <!-- Balance table will be loaded here -->
+              <div class="text-center" style="opacity: 0.7; padding: 20px;">
+                Hesaplamak için "Hesapla" butonuna tıklayın
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-row mt-2">
+            <button id="exportData" type="button">Veriyi Dışa Aktar</button>
+            <button id="sendSummary" type="button">Özeti Chat'e Gönder</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Back to Chat Button (for mobile) -->
+      <div class="flex-row full-width mt-2">
+        <button id="backToChatLocal" type="button" class="full-width">Chat'e Dön</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Expense Detail Modal -->
+  <div id="expenseModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="panel-title">Harcama Detayı</div>
+        <button type="button" id="closeModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="expenseDetailContent">
+          <!-- Expense details will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="editExpense">Düzenle</button>
+        <button type="button" id="deleteExpense" class="danger">Sil</button>
+        <button type="button" id="closeModal2">Kapat</button>
       </div>
     </div>
   </div>
@@ -283,13 +824,13 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
       getFirestore, collection, addDoc, doc, setDoc, getDoc,
-      query, orderBy, limit, onSnapshot, serverTimestamp, getDocs
+      query, orderBy, limit, onSnapshot, serverTimestamp, getDocs,
+      deleteDoc, updateDoc, where
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import {
       getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // ✅ Kendi console config'in
     const firebaseConfig = {
       apiKey: "AIzaSyDN0zwDiK0MveXRkykgkhG-p-oqBvanF7U",
       authDomain: "websitelerico.firebaseapp.com",
@@ -305,9 +846,9 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // ----- View mode (same file, different tab)
+    // ----- View mode
     const params = new URLSearchParams(location.search);
-    const view = params.get("view") || "chat"; // chat | settlement
+    const view = params.get("view") || "chat";
 
     const pageTitle = document.getElementById("pageTitle");
     const chatView = document.getElementById("chatView");
@@ -318,7 +859,6 @@
     const backToChatLocal = document.getElementById("backToChatLocal");
 
     function currentBaseUrl() {
-      // aynı path üzerinde view değiştiriyoruz
       return location.origin + location.pathname;
     }
     function openInNewTab(targetView) {
@@ -329,7 +869,7 @@
     // UI switch
     if (view === "settlement") {
       pageTitle.textContent = "Mahsuplaşma";
-      settlementView.style.display = "block";
+      settlementView.style.display = "flex";
       chatView.style.display = "none";
       openChatBtn.style.display = "inline-block";
       openSettlementBtn.style.display = "none";
@@ -344,7 +884,6 @@
     openSettlementBtn.addEventListener("click", () => openInNewTab("settlement"));
     openChatBtn.addEventListener("click", () => openInNewTab("chat"));
     backToChatLocal.addEventListener("click", () => {
-      // aynı sekmede chat'e dön
       location.href = currentBaseUrl() + "?view=chat";
     });
 
@@ -356,12 +895,14 @@
     loginBtn.addEventListener("click", async () => {
       try {
         loginBtn.disabled = true;
+        loginBtn.textContent = "Giriş yapılıyor...";
         await signInWithPopup(auth, provider);
       } catch (e) {
         console.error(e);
-        alert(e.code || e.message);
+        alert(e.code === 'auth/popup-closed-by-user' ? 'Giriş penceresi kapatıldı' : 'Giriş hatası');
       } finally {
         loginBtn.disabled = false;
+        loginBtn.textContent = "Google ile giriş";
       }
     });
 
@@ -376,10 +917,15 @@
     function formatTime(ts) {
       if (!ts?.toDate) return "";
       const d = ts.toDate();
-      return d.toLocaleString("tr-TR", { hour: "2-digit", minute:"2-digit" });
+      return d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute:"2-digit" });
     }
 
-    // ----- USERS: write current user to users/{uid} for dropdown later
+    function formatDateOnly(ts) {
+      if (!ts?.toDate) return "";
+      return ts.toDate().toLocaleDateString("tr-TR");
+    }
+
+    // ----- USERS
     async function upsertUser(user) {
       if (!user) return;
       const userRef = doc(db, "users", user.uid);
@@ -425,6 +971,7 @@
       if (!text || !uid) return;
 
       sendChat.disabled = true;
+      sendChat.textContent = "Gönderiliyor...";
       try {
         const messagesRef = collection(db, "rooms", "public", "messages");
         await addDoc(messagesRef, {
@@ -436,171 +983,646 @@
         chatText.value = "";
       } catch (err) {
         console.error(err);
-        alert("Mesaj gönderilemedi. Rules/izin?");
+        alert("Mesaj gönderilemedi. İnternet bağlantınızı kontrol edin.");
       } finally {
         sendChat.disabled = false;
+        sendChat.textContent = "Gönder";
         chatText.focus();
       }
     });
 
-    // ----- SETTLEMENT
+    // ----- ENHANCED SETTLEMENT SYSTEM
     const stTitle = document.getElementById("stTitle");
-    const stPrice = document.getElementById("stPrice");
+    const stAmount = document.getElementById("stAmount");
     const stCurrency = document.getElementById("stCurrency");
+    const stDate = document.getElementById("stDate");
+    const stCategory = document.getElementById("stCategory");
     const stNote = document.getElementById("stNote");
-    const stParticipants = document.getElementById("stParticipants");
+    const participantsContainer = document.getElementById("participantsContainer");
+    const selectAllParticipants = document.getElementById("selectAllParticipants");
+    const clearSelection = document.getElementById("clearSelection");
+    const selectedCount = document.getElementById("selectedCount");
     const stManualName = document.getElementById("stManualName");
     const addManualParticipantBtn = document.getElementById("addManualParticipant");
-    const saveSettlementBtn = document.getElementById("saveSettlement");
+    const saveExpenseBtn = document.getElementById("saveExpense");
+    const clearFormBtn = document.getElementById("clearForm");
     const stStatus = document.getElementById("stStatus");
-    const settlementList = document.getElementById("settlementList");
+    const expensesList = document.getElementById("expensesList");
+    const expensesCount = document.getElementById("expensesCount");
+    const refreshExpensesBtn = document.getElementById("refreshExpenses");
+    const filterCategory = document.getElementById("filterCategory");
+    const calculateSettlementBtn = document.getElementById("calculateSettlement");
+    const totalExpenseEl = document.getElementById("totalExpense");
+    const expenseCountEl = document.getElementById("expenseCount");
+    const participantCountEl = document.getElementById("participantCount");
+    const averagePerPersonEl = document.getElementById("averagePerPerson");
+    const balanceTableContainer = document.getElementById("balanceTableContainer");
+    const exportDataBtn = document.getElementById("exportData");
+    const sendSummaryBtn = document.getElementById("sendSummary");
+    const expenseModal = document.getElementById("expenseModal");
+    const closeModalBtns = document.querySelectorAll("#closeModal, #closeModal2");
+    const editExpenseBtn = document.getElementById("editExpense");
+    const deleteExpenseBtn = document.getElementById("deleteExpense");
+    const expenseDetailContent = document.getElementById("expenseDetailContent");
 
-    let unsubSettlements = null;
-    let usersCache = []; // {uid, displayName, email}
+    // Set today's date as default
+    stDate.value = new Date().toISOString().split('T')[0];
 
-    function optionLabel(u) {
-      const name = u.displayName?.trim() || "";
-      const email = u.email?.trim() || "";
-      if (name && email) return `${name} (${email})`;
-      return name || email || u.uid;
-    }
+    let usersCache = [];
+    let manualParticipants = [];
+    let selectedParticipants = new Set();
+    let payerId = null;
+    let allExpenses = [];
+    let selectedExpenseId = null;
 
-    async function loadUsersForDropdown() {
-      // basit: users koleksiyonundan son N kullanıcı
-      // (İstersen ileride orderBy(lastSeenAt) + limit ile optimize edilir)
+    async function loadUsersForParticipants() {
       const usersRef = collection(db, "users");
       const snap = await getDocs(usersRef);
       usersCache = [];
       snap.forEach(d => usersCache.push(d.data()));
-
-      // dropdown doldur
-      if (!stParticipants) return;
-      stParticipants.innerHTML = "";
-      // deterministik sıralama
-      usersCache
-        .sort((a,b) => optionLabel(a).localeCompare(optionLabel(b), "tr"))
-        .forEach(u => {
-          const opt = document.createElement("option");
-          opt.value = u.uid;
-          opt.textContent = optionLabel(u);
-          stParticipants.appendChild(opt);
-        });
+      renderParticipantsList();
     }
 
-    function getSelectedParticipantUids() {
-      if (!stParticipants) return [];
-      return Array.from(stParticipants.selectedOptions).map(o => o.value);
+    function renderParticipantsList() {
+      participantsContainer.innerHTML = '';
+      
+      // Add current user first
+      const currentUser = usersCache.find(u => u.uid === uid);
+      if (currentUser) {
+        addParticipantItem(currentUser);
+      }
+      
+      // Add other users
+      usersCache.forEach(user => {
+        if (user.uid !== uid) {
+          addParticipantItem(user);
+        }
+      });
+      
+      // Add manual participants
+      manualParticipants.forEach((name, index) => {
+        addManualParticipantItem(name, index);
+      });
+      
+      updateSelectedCount();
     }
 
-    // Manual participant: gerçek user değil, adı string olarak kayda ekliyoruz
-    // DB formatı: participants = [{type:"user", uid:"..."}, {type:"manual", name:"..."}]
-    // dropdown seçilenler user uid, manual eklenenler string listede tutulur
-    let manualParticipants = [];
+    function addParticipantItem(user) {
+      const item = document.createElement('div');
+      item.className = 'participant-item';
+      item.dataset.id = user.uid;
+      item.dataset.type = 'user';
+      item.dataset.name = user.displayName || user.email || user.uid;
+      
+      const isSelected = selectedParticipants.has(user.uid);
+      const isPayer = payerId === user.uid;
+      
+      if (isSelected) item.classList.add('selected');
+      if (isPayer) item.classList.add('payer');
+      
+      item.innerHTML = `
+        <div class="checkbox"></div>
+        <div class="participant-name">${esc(user.displayName || user.email || user.uid)}</div>
+        ${isPayer ? '<div class="role-badge">Ödeyen</div>' : ''}
+      `;
+      
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.participant-item') === item) {
+          if (e.ctrlKey || e.metaKey) {
+            // Ctrl-click to set as payer
+            payerId = user.uid;
+          } else {
+            // Regular click to toggle selection
+            if (selectedParticipants.has(user.uid)) {
+              selectedParticipants.delete(user.uid);
+              if (payerId === user.uid) payerId = null;
+            } else {
+              selectedParticipants.add(user.uid);
+            }
+          }
+          renderParticipantsList();
+        }
+      });
+      
+      participantsContainer.appendChild(item);
+    }
 
-    addManualParticipantBtn?.addEventListener("click", () => {
-      const name = (stManualName.value || "").trim();
-      if (!name) return;
-      manualParticipants.push(name);
-      stManualName.value = "";
-      stStatus.textContent = `Manuel eklendi: ${name}`;
-      setTimeout(() => stStatus.textContent = "Hazır", 1500);
+    function addManualParticipantItem(name, index) {
+      const item = document.createElement('div');
+      item.className = 'participant-item';
+      item.dataset.id = `manual_${index}`;
+      item.dataset.type = 'manual';
+      item.dataset.name = name;
+      
+      const isSelected = selectedParticipants.has(`manual_${index}`);
+      const isPayer = payerId === `manual_${index}`;
+      
+      if (isSelected) item.classList.add('selected');
+      if (isPayer) item.classList.add('payer');
+      
+      item.innerHTML = `
+        <div class="checkbox"></div>
+        <div class="participant-name">${esc(name)}</div>
+        <div class="chip manual">manuel</div>
+        ${isPayer ? '<div class="role-badge">Ödeyen</div>' : ''}
+      `;
+      
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.participant-item') === item) {
+          if (e.ctrlKey || e.metaKey) {
+            payerId = `manual_${index}`;
+          } else {
+            if (selectedParticipants.has(`manual_${index}`)) {
+              selectedParticipants.delete(`manual_${index}`);
+              if (payerId === `manual_${index}`) payerId = null;
+            } else {
+              selectedParticipants.add(`manual_${index}`);
+            }
+          }
+          renderParticipantsList();
+        }
+      });
+      
+      participantsContainer.appendChild(item);
+    }
+
+    function updateSelectedCount() {
+      const count = selectedParticipants.size;
+      selectedCount.textContent = `${count} katılımcı seçildi`;
+      saveExpenseBtn.disabled = count === 0 || !stTitle.value.trim() || !stAmount.value || !payerId;
+    }
+
+    selectAllParticipants.addEventListener('click', () => {
+      selectedParticipants.clear();
+      usersCache.forEach(user => selectedParticipants.add(user.uid));
+      manualParticipants.forEach((_, index) => selectedParticipants.add(`manual_${index}`));
+      if (usersCache.length > 0 && !payerId) {
+        payerId = usersCache[0].uid;
+      }
+      renderParticipantsList();
     });
 
-    saveSettlementBtn?.addEventListener("click", async () => {
+    clearSelection.addEventListener('click', () => {
+      selectedParticipants.clear();
+      payerId = null;
+      renderParticipantsList();
+    });
+
+    addManualParticipantBtn.addEventListener('click', () => {
+      const name = stManualName.value.trim();
+      if (!name) return;
+      manualParticipants.push(name);
+      stManualName.value = '';
+      stStatus.textContent = `Manuel katılımcı eklendi: ${name}`;
+      setTimeout(() => stStatus.textContent = 'Hazır', 1500);
+      renderParticipantsList();
+    });
+
+    clearFormBtn.addEventListener('click', () => {
+      stTitle.value = '';
+      stAmount.value = '';
+      stNote.value = '';
+      stDate.value = new Date().toISOString().split('T')[0];
+      stManualName.value = '';
+      selectedParticipants.clear();
+      payerId = null;
+      manualParticipants = [];
+      renderParticipantsList();
+      stStatus.textContent = 'Form temizlendi';
+    });
+
+    stTitle.addEventListener('input', updateSelectedCount);
+    stAmount.addEventListener('input', updateSelectedCount);
+
+    saveExpenseBtn.addEventListener('click', async () => {
       if (!uid) return;
 
-      const title = (stTitle.value || "").trim() || "Mahsuplaşma";
-      const priceNum = Number(stPrice.value);
-      const currency = stCurrency.value || "TRY";
-      const note = (stNote.value || "").trim();
+      const title = stTitle.value.trim();
+      const amount = Number(stAmount.value);
+      const currency = stCurrency.value;
+      const date = stDate.value;
+      const category = stCategory.value;
+      const note = stNote.value.trim();
 
-      if (!Number.isFinite(priceNum) || priceNum <= 0) {
-        alert("Toplam fiyat > 0 olmalı.");
+      if (!title) {
+        alert('Harcama başlığı gerekli');
         return;
       }
 
-      const selectedUids = getSelectedParticipantUids();
-
-      if (selectedUids.length === 0 && manualParticipants.length === 0) {
-        alert("En az 1 katılımcı seç (veya manuel ekle).");
+      if (!amount || amount <= 0) {
+        alert('Geçerli bir tutar girin');
         return;
       }
 
-      const participants = [
-        ...selectedUids.map(u => ({ type: "user", uid: u })),
-        ...manualParticipants.map(n => ({ type: "manual", name: n }))
-      ];
+      if (selectedParticipants.size === 0) {
+        alert('En az bir katılımcı seçin');
+        return;
+      }
 
-      saveSettlementBtn.disabled = true;
-      stStatus.textContent = "Kaydediliyor…";
+      if (!payerId) {
+        alert('Ödeyen kişiyi belirleyin (Ctrl+Click ile)');
+        return;
+      }
+
+      const participants = [];
+      selectedParticipants.forEach(id => {
+        if (id.startsWith('manual_')) {
+          const index = parseInt(id.split('_')[1]);
+          participants.push({
+            type: 'manual',
+            name: manualParticipants[index]
+          });
+        } else {
+          const user = usersCache.find(u => u.uid === id);
+          participants.push({
+            type: 'user',
+            uid: id,
+            name: user?.displayName || user?.email || id
+          });
+        }
+      });
+
+      saveExpenseBtn.disabled = true;
+      saveExpenseBtn.classList.add('loading');
+      stStatus.textContent = 'Kaydediliyor...';
 
       try {
-        await addDoc(collection(db, "settlements"), {
+        await addDoc(collection(db, "expenses"), {
           title,
-          totalPrice: priceNum,
+          amount,
           currency,
+          date,
+          category,
           note,
           participants,
+          payer: payerId,
+          payerName: getParticipantName(payerId),
           createdByUid: uid,
           createdByName: auth.currentUser?.displayName || auth.currentUser?.email || "user",
           createdAt: serverTimestamp()
         });
 
-        // reset form
-        stTitle.value = "";
-        stPrice.value = "";
-        stNote.value = "";
-        manualParticipants = [];
-        Array.from(stParticipants.options).forEach(o => o.selected = false);
-
-        stStatus.textContent = "Kaydedildi ✅";
-        setTimeout(() => stStatus.textContent = "Hazır", 1500);
+        stStatus.textContent = 'Harcama kaydedildi ✅';
+        setTimeout(() => stStatus.textContent = 'Hazır', 1500);
+        
+        // Clear form
+        stTitle.value = '';
+        stAmount.value = '';
+        stNote.value = '';
+        selectedParticipants.clear();
+        payerId = null;
+        renderParticipantsList();
       } catch (e) {
         console.error(e);
-        alert("Kaydedilemedi (rules/izin?)");
-        stStatus.textContent = "Hata";
+        alert('Kaydedilemedi. İnternet bağlantınızı kontrol edin.');
+        stStatus.textContent = 'Hata';
       } finally {
-        saveSettlementBtn.disabled = false;
+        saveExpenseBtn.disabled = false;
+        saveExpenseBtn.classList.remove('loading');
       }
     });
 
-    function renderSettlementCard(d) {
-      const created = d.createdAt ? formatTime(d.createdAt) : "";
-      const p = d.participants || [];
-      const userCount = p.filter(x => x.type === "user").length;
-      const manualCount = p.filter(x => x.type === "manual").length;
+    function getParticipantName(id) {
+      if (id.startsWith('manual_')) {
+        const index = parseInt(id.split('_')[1]);
+        return manualParticipants[index];
+      } else {
+        const user = usersCache.find(u => u.uid === id);
+        return user?.displayName || user?.email || id;
+      }
+    }
 
-      // katılımcı isimlerini çöz
-      const names = p.map(x => {
-        if (x.type === "manual") return x.name;
-        const u = usersCache.find(uu => uu.uid === x.uid);
-        return u ? (u.displayName || u.email || u.uid.slice(0,6)) : (x.uid?.slice(0,6) || "user");
+    async function loadExpenses() {
+      const expensesRef = collection(db, "expenses");
+      const q = query(expensesRef, orderBy("createdAt", "desc"));
+      const snap = await getDocs(q);
+      
+      allExpenses = [];
+      snap.forEach(doc => {
+        allExpenses.push({
+          id: doc.id,
+          ...doc.data()
+        });
       });
+      
+      renderExpensesList();
+      updateExpensesCount();
+    }
 
-      const el = document.createElement("div");
-      el.className = "card";
-      el.innerHTML = `
-        <div class="card-title">
-          <strong>${esc(d.title || "Mahsuplaşma")}</strong>
-          <span class="badge">${esc(String(d.totalPrice))} ${esc(d.currency || "TRY")}</span>
+    function renderExpensesList() {
+      expensesList.innerHTML = '';
+      
+      const categoryFilter = filterCategory.value;
+      const filteredExpenses = categoryFilter 
+        ? allExpenses.filter(exp => exp.category === categoryFilter)
+        : allExpenses;
+      
+      if (filteredExpenses.length === 0) {
+        expensesList.innerHTML = `
+          <div class="text-center" style="opacity: 0.7; padding: 40px;">
+            Henüz harcama kaydı bulunmuyor
+          </div>
+        `;
+        return;
+      }
+      
+      filteredExpenses.forEach(expense => {
+        const card = document.createElement('div');
+        card.className = 'expense-card cursor-pointer';
+        card.dataset.id = expense.id;
+        
+        const participantNames = expense.participants?.map(p => {
+          return p.type === 'manual' ? p.name : 
+                 usersCache.find(u => u.uid === p.uid)?.displayName || 
+                 usersCache.find(u => u.uid === p.uid)?.email || 
+                 p.uid?.slice(0,6);
+        }).join(', ') || '';
+        
+        card.innerHTML = `
+          <div class="expense-header">
+            <div class="expense-title">${esc(expense.title)}</div>
+            <div class="expense-amount">${esc(expense.amount)} ${esc(expense.currency)}</div>
+          </div>
+          <div class="expense-details">
+            <div class="expense-meta">
+              <div>📅 ${esc(formatDateOnly(expense.date) || formatDateOnly(expense.createdAt))}</div>
+              <div>🏷️ ${esc(getCategoryLabel(expense.category))}</div>
+              <div>👤 ${esc(expense.payerName || '')} ödedi</div>
+            </div>
+            ${expense.note ? `
+              <div class="expense-note">${esc(expense.note)}</div>
+            ` : ''}
+            <div class="expense-participants">
+              <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Katılımcılar:</div>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${participantNames.split(', ').map(name => `
+                  <span class="chip">${esc(name)}</span>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        card.addEventListener('click', () => showExpenseDetail(expense.id));
+        expensesList.appendChild(card);
+      });
+    }
+
+    function getCategoryLabel(category) {
+      const labels = {
+        'yemek': 'Yemek',
+        'market': 'Market',
+        'ulasim': 'Ulaşım',
+        'eglence': 'Eğlence',
+        'konaklama': 'Konaklama',
+        'diger': 'Diğer'
+      };
+      return labels[category] || category;
+    }
+
+    function updateExpensesCount() {
+      expensesCount.textContent = `${allExpenses.length} harcama bulundu`;
+    }
+
+    refreshExpensesBtn.addEventListener('click', loadExpenses);
+    filterCategory.addEventListener('change', renderExpensesList);
+
+    function showExpenseDetail(expenseId) {
+      const expense = allExpenses.find(e => e.id === expenseId);
+      if (!expense) return;
+      
+      selectedExpenseId = expenseId;
+      
+      const participantNames = expense.participants?.map(p => {
+        return p.type === 'manual' ? p.name : 
+               usersCache.find(u => u.uid === p.uid)?.displayName || 
+               usersCache.find(u => u.uid === p.uid)?.email || 
+               p.uid?.slice(0,6);
+      }).join(', ') || '';
+      
+      expenseDetailContent.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent);">
+            ${esc(expense.title)}
+          </div>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-green); margin-top: 8px;">
+            ${esc(expense.amount)} ${esc(expense.currency)}
+          </div>
         </div>
-        <div class="hint" style="margin-top:8px;">
-          <div><b>Katılımcılar:</b> ${esc(names.join(", "))} ${created ? ` • <span style="opacity:.75">${esc(created)}</span>` : ""}</div>
-          ${d.note ? `<div style="margin-top:6px;"><b>Not:</b> ${esc(d.note)}</div>` : ""}
-          <div style="margin-top:6px; opacity:.8;"><b>Oluşturan:</b> ${esc(d.createdByName || d.createdByUid?.slice(0,6) || "")}</div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div>
+            <div style="font-size: 0.85rem; opacity: 0.8;">Tarih</div>
+            <div>${esc(formatDateOnly(expense.date) || formatDateOnly(expense.createdAt))}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; opacity: 0.8;">Kategori</div>
+            <div>${esc(getCategoryLabel(expense.category))}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; opacity: 0.8;">Ödeyen</div>
+            <div style="color: var(--accent-yellow); font-weight: 600;">
+              ${esc(expense.payerName || '')}
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 0.85rem; opacity: 0.8;">Oluşturan</div>
+            <div>${esc(expense.createdByName || '')}</div>
+          </div>
+        </div>
+        
+        ${expense.note ? `
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Notlar</div>
+            <div style="background: rgba(0,0,0,.1); padding: 12px; border-radius: 8px;">
+              ${esc(expense.note)}
+            </div>
+          </div>
+        ` : ''}
+        
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 8px;">Katılımcılar</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+            ${expense.participants?.map(p => {
+              const name = p.type === 'manual' ? p.name : 
+                          usersCache.find(u => u.uid === p.uid)?.displayName || 
+                          usersCache.find(u => u.uid === p.uid)?.email || 
+                          p.uid?.slice(0,6);
+              return `<span class="chip ${p.uid === expense.payer ? 'payer' : 'user'}">${esc(name)}</span>`;
+            }).join('')}
+          </div>
+        </div>
+        
+        <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 16px;">
+          Oluşturulma: ${esc(formatTime(expense.createdAt))}
         </div>
       `;
-      settlementList.appendChild(el);
+      
+      expenseModal.classList.remove('hidden');
     }
 
-    function startSettlementsListener() {
-      if (unsubSettlements) { unsubSettlements(); unsubSettlements = null; }
-      const q = query(collection(db, "settlements"), orderBy("createdAt", "desc"), limit(30));
-      unsubSettlements = onSnapshot(q, (snap) => {
-        settlementList.innerHTML = "";
-        snap.forEach(docSnap => renderSettlementCard(docSnap.data()));
+    closeModalBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        expenseModal.classList.add('hidden');
+        selectedExpenseId = null;
       });
+    });
+
+    editExpenseBtn.addEventListener('click', () => {
+      // TODO: Implement edit functionality
+      alert('Düzenleme özelliği yakında eklenecek');
+    });
+
+    deleteExpenseBtn.addEventListener('click', async () => {
+      if (!selectedExpenseId || !confirm('Bu harcamayı silmek istediğinize emin misiniz?')) return;
+      
+      try {
+        await deleteDoc(doc(db, "expenses", selectedExpenseId));
+        expenseModal.classList.add('hidden');
+        loadExpenses();
+        stStatus.textContent = 'Harcama silindi';
+      } catch (e) {
+        console.error(e);
+        alert('Silinemedi. İnternet bağlantınızı kontrol edin.');
+      }
+    });
+
+    calculateSettlementBtn.addEventListener('click', calculateSettlement);
+
+    function calculateSettlement() {
+      if (allExpenses.length === 0) {
+        balanceTableContainer.innerHTML = `
+          <div class="text-center" style="opacity: 0.7; padding: 20px;">
+            Hesaplama yapmak için harcama kaydı bulunmuyor
+          </div>
+        `;
+        return;
+      }
+
+      const balances = {};
+      const total = { amount: 0, count: 0 };
+      const allParticipants = new Set();
+
+      // Calculate total and individual payments
+      allExpenses.forEach(expense => {
+        total.amount += expense.amount;
+        total.count++;
+        
+        // Add participants to set
+        expense.participants?.forEach(p => {
+          const id = p.type === 'manual' ? p.name : p.uid;
+          allParticipants.add(id);
+        });
+
+        // Payer gets credit
+        const payerId = expense.payer;
+        if (payerId) {
+          balances[payerId] = (balances[payerId] || 0) + expense.amount;
+        }
+
+        // Participants get debt
+        const participantCount = expense.participants?.length || 1;
+        const share = expense.amount / participantCount;
+        
+        expense.participants?.forEach(p => {
+          const id = p.type === 'manual' ? p.name : p.uid;
+          balances[id] = (balances[id] || 0) - share;
+        });
+      });
+
+      // Update summary
+      totalExpenseEl.textContent = `${total.amount.toFixed(2)} TRY`;
+      expenseCountEl.textContent = total.count;
+      participantCountEl.textContent = allParticipants.size;
+      averagePerPersonEl.textContent = allParticipants.size > 0 
+        ? `${(total.amount / allParticipants.size).toFixed(2)} TRY`
+        : '0 TRY';
+
+      // Create balance table
+      let tableHTML = `
+        <table class="balance-table">
+          <thead>
+            <tr>
+              <th>Kişi</th>
+              <th>Durum</th>
+              <th>Tutar</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      Object.entries(balances).forEach(([id, balance]) => {
+        const name = getParticipantName(id) || id;
+        const isPositive = balance > 0;
+        const isNegative = balance < 0;
+        const absBalance = Math.abs(balance);
+        
+        tableHTML += `
+          <tr>
+            <td>${esc(name)}</td>
+            <td>${isPositive ? 'Alacaklı' : isNegative ? 'Borçlu' : 'Dengeli'}</td>
+            <td class="amount-cell ${isPositive ? 'positive' : isNegative ? 'negative' : 'neutral'}">
+              ${isPositive ? '+' : isNegative ? '-' : ''}${absBalance.toFixed(2)} TRY
+            </td>
+          </tr>
+        `;
+      });
+
+      tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+      balanceTableContainer.innerHTML = tableHTML;
     }
+
+    exportDataBtn.addEventListener('click', () => {
+      if (allExpenses.length === 0) {
+        alert('Dışa aktarılacak veri bulunmuyor');
+        return;
+      }
+      
+      const data = {
+        expenses: allExpenses,
+        summary: {
+          total: totalExpenseEl.textContent,
+          count: expenseCountEl.textContent,
+          participants: participantCountEl.textContent,
+          average: averagePerPersonEl.textContent
+        },
+        exportedAt: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `mahsuplasma-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      stStatus.textContent = 'Veri dışa aktarıldı';
+    });
+
+    sendSummaryBtn.addEventListener('click', async () => {
+      if (!uid) return;
+      
+      try {
+        const messagesRef = collection(db, "rooms", "public", "messages");
+        await addDoc(messagesRef, {
+          text: `📊 Mahsuplaşma özeti:\nToplam: ${totalExpenseEl.textContent}\nHarcama sayısı: ${expenseCountEl.textContent}\nKatılımcılar: ${participantCountEl.textContent}`,
+          uid,
+          name: auth.currentUser?.displayName || auth.currentUser?.email || "user",
+          createdAt: serverTimestamp()
+        });
+        
+        stStatus.textContent = 'Özet chat\'e gönderildi';
+        setTimeout(() => stStatus.textContent = 'Hazır', 1500);
+      } catch (err) {
+        console.error(err);
+        alert('Chat\'e gönderilemedi');
+      }
+    });
 
     // ----- Global auth state
     onAuthStateChanged(auth, async (user) => {
@@ -610,16 +1632,10 @@
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
 
-        // chat disable
         sendChat && (sendChat.disabled = true);
+        saveExpenseBtn && (saveExpenseBtn.disabled = true);
 
-        // settlement disable
-        saveSettlementBtn && (saveSettlementBtn.disabled = true);
-        stParticipants && (stParticipants.innerHTML = "");
-
-        // listeners kapat
         if (unsubChat) { unsubChat(); unsubChat = null; }
-        if (unsubSettlements) { unsubSettlements(); unsubSettlements = null; }
 
         return;
       }
@@ -632,14 +1648,11 @@
       loginBtn.style.display = "none";
       logoutBtn.style.display = "inline-block";
 
-      // ✅ kullanıcıyı users koleksiyonuna yaz
       await upsertUser(user);
 
-      // view’e göre davran
       if (view === "chat") {
         sendChat.disabled = false;
 
-        // chat listener
         if (unsubChat) { unsubChat(); unsubChat = null; }
         const q = query(collection(db, "rooms", "public", "messages"), orderBy("createdAt", "asc"), limit(300));
         unsubChat = onSnapshot(q, (snap) => {
@@ -653,11 +1666,9 @@
       }
 
       if (view === "settlement") {
-        saveSettlementBtn.disabled = false;
-
-        // dropdown users
-        await loadUsersForDropdown();
-        startSettlementsListener();
+        saveExpenseBtn.disabled = false;
+        await loadUsersForParticipants();
+        await loadExpenses();
       }
     });
   </script>
