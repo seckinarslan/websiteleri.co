@@ -17,7 +17,7 @@
     input { flex:1; padding:12px; outline:none; }
     button { padding:12px 14px; cursor:pointer; }
     button:disabled { opacity:.5; cursor:not-allowed; }
-    .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
     .pill { padding:6px 10px; border:1px solid rgba(255,255,255,.15); border-radius:999px; font-size:12px; opacity:.9; }
   </style>
 </head>
@@ -25,7 +25,11 @@
   <div class="wrap">
     <div class="top">
       <h2 style="margin:0">Basit Chat (Firestore)</h2>
-      <div class="pill" id="status">Bağlanıyor…</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="login" type="button">Google ile giriş</button>
+        <button id="logout" type="button" style="display:none;">Çıkış</button>
+        <div class="pill" id="status">Giriş bekleniyor…</div>
+      </div>
     </div>
 
     <div class="chat">
@@ -39,24 +43,28 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } 
-      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+    // ✅ Burayı Firebase Console -> Project settings -> Your apps -> Web app'ten aldığın config ile birebir yap.
     const firebaseConfig = {
-    apiKey: "AIzaSyDN0zwDiK0MveXRkykgkhG-p-oqBvanF7U",
-    authDomain: "websitelerico.firebaseapp.com",
-    projectId: "websitelerico",
-    storageBucket: "websitelerico.firebasestorage.app",
-    messagingSenderId: "848484251740",
-    appId: "1:848484251740:web:a7692eeef83ca05e3b4e99",
-    measurementId: "G-9V22FDX9N0"
-  };
+      apiKey: "AIzaSyDN0zwDiK0MveXRkykgkhG-p-oqBvanF7U",
+      authDomain: "websitelrico.firebaseapp.com",
+      projectId: "websitelrico",
+      storageBucket: "websitelrico.firebasestorage.app",
+      messagingSenderId: "848484251740",
+      appId: "1:848484251740:web:a7692eeef83ca05e3b4e99",
+      measurementId: "G-9V22FDX9N0"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
     const roomId = "public";
     const msgsEl = document.getElementById("msgs");
@@ -64,10 +72,14 @@
     const form = document.getElementById("form");
     const textEl = document.getElementById("text");
     const sendBtn = document.getElementById("send");
+    const loginBtn = document.getElementById("login");
+    const logoutBtn = document.getElementById("logout");
 
     let uid = null;
+    let unsubscribe = null;
 
-    const esc = (s) => s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+    const esc = (s) =>
+      (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
     function scrollBottom() { msgsEl.scrollTop = msgsEl.scrollHeight; }
 
@@ -76,22 +88,50 @@
       const el = document.createElement("div");
       el.className = "msg" + (mine ? " me" : "");
       el.innerHTML = `
-        <div class="meta">${mine ? "sen" : (d.uid?.slice(0,6) ?? "anon")}</div>
-        <div>${esc(d.text ?? "")}</div>
+        <div class="meta">${mine ? "sen" : esc(d.name || d.uid?.slice(0,6) || "user")}</div>
+        <div>${esc(d.text)}</div>
       `;
       msgsEl.appendChild(el);
     }
 
+    loginBtn.addEventListener("click", async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "Google giriş hata";
+        alert(e.code || e.message);
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
     onAuthStateChanged(auth, (user) => {
-      if (!user) return;
+      // önceki snapshot listener varsa kapat
+      if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+
+      if (!user) {
+        uid = null;
+        statusEl.textContent = "Giriş bekleniyor…";
+        sendBtn.disabled = true;
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+        msgsEl.innerHTML = "";
+        return;
+      }
+
       uid = user.uid;
-      statusEl.textContent = "Bağlandı (anon)";
+      statusEl.textContent = user.displayName || user.email || "Bağlandı";
       sendBtn.disabled = false;
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
 
       const messagesRef = collection(db, "rooms", roomId, "messages");
       const q = query(messagesRef, orderBy("createdAt", "asc"), limit(300));
 
-      onSnapshot(q, (snap) => {
+      unsubscribe = onSnapshot(q, (snap) => {
         msgsEl.innerHTML = "";
         snap.forEach(doc => render(doc.data()));
         scrollBottom();
@@ -99,11 +139,6 @@
         console.error(e);
         statusEl.textContent = "Firestore hata";
       });
-    });
-
-    await signInAnonymously(auth).catch((e) => {
-      console.error(e);
-      statusEl.textContent = "Auth hata";
     });
 
     form.addEventListener("submit", async (e) => {
@@ -114,11 +149,16 @@
       sendBtn.disabled = true;
       try {
         const messagesRef = collection(db, "rooms", roomId, "messages");
-        await addDoc(messagesRef, { text, uid, createdAt: serverTimestamp() });
+        await addDoc(messagesRef, {
+          text,
+          uid,
+          name: auth.currentUser?.displayName || auth.currentUser?.email || "user",
+          createdAt: serverTimestamp()
+        });
         textEl.value = "";
       } catch (err) {
         console.error(err);
-        alert("Gönderilemedi. Rules/izin kontrol et.");
+        alert("Gönderilemedi. Firestore Rules/izin kontrol et.");
       } finally {
         sendBtn.disabled = false;
         textEl.focus();
