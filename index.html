@@ -5,27 +5,444 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Basit Chat</title>
   <style>
-    body { font-family: system-ui; margin:0; background:#0b0f17; color:#e7eefc; }
-    .wrap { max-width: 900px; margin: 0 auto; padding: 18px; }
-    .chat { margin-top: 12px; border:1px solid rgba(255,255,255,.12); border-radius:16px; overflow:hidden; background:rgba(255,255,255,.03); }
-    .msgs { height: 70vh; overflow:auto; padding: 14px; display:flex; flex-direction:column; gap:10px; }
-    .msg { max-width: 80%; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.04); }
-    .me { align-self:flex-end; background:rgba(120,160,255,.12); }
-    .meta { font-size:11px; opacity:.7; margin-bottom:6px; }
-    form { display:flex; gap:10px; padding: 12px; border-top:1px solid rgba(255,255,255,.10); background:rgba(0,0,0,.15); }
-    input, button { border-radius:12px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); color:#e7eefc; }
-    input { flex:1; padding:12px; outline:none; }
-    button { padding:12px 14px; cursor:pointer; }
-    button:disabled { opacity:.5; cursor:not-allowed; }
-    .top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap: wrap; }
-    .pill { padding:6px 10px; border:1px solid rgba(255,255,255,.15); border-radius:999px; font-size:12px; opacity:.9; }
+    :root {
+      --primary-bg: #0b0f17;
+      --secondary-bg: rgba(255, 255, 255, .03);
+      --message-bg: rgba(255, 255, 255, .04);
+      --my-message-bg: rgba(120, 160, 255, .12);
+      --text-color: #e7eefc;
+      --border-color: rgba(255, 255, 255, .12);
+      --border-light: rgba(255, 255, 255, .10);
+      --input-bg: rgba(255, 255, 255, .06);
+      --form-bg: rgba(0, 0, 0, .15);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-full: 999px;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      margin: 0; 
+      background: var(--primary-bg); 
+      color: var(--text-color);
+      min-height: 100vh;
+    }
+    
+    .wrap { 
+      max-width: 900px; 
+      margin: 0 auto; 
+      padding: 12px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .top { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      gap: 10px; 
+      flex-wrap: wrap;
+      padding: 8px 0;
+    }
+    
+    .top h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .auth-section {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    
+    button {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      background: var(--input-bg);
+      color: var(--text-color);
+      cursor: pointer;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    
+    button:hover:not(:disabled) {
+      background: rgba(255, 255, 255, .09);
+    }
+    
+    button:disabled { 
+      opacity: .5; 
+      cursor: not-allowed; 
+    }
+    
+    .pill { 
+      padding: 6px 10px; 
+      border: 1px solid var(--border-light); 
+      border-radius: var(--radius-full); 
+      font-size: 0.8rem; 
+      opacity: .9; 
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    
+    .chat { 
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      margin-top: 12px; 
+      border: 1px solid var(--border-color); 
+      border-radius: var(--radius-lg); 
+      overflow: hidden; 
+      background: var(--secondary-bg);
+      min-height: 0; /* Firefox için flex item'ın overflow çalışması için */
+    }
+    
+    .msgs { 
+      flex: 1;
+      overflow: auto; 
+      padding: 12px; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 10px; 
+      -webkit-overflow-scrolling: touch; /* Mobilde smooth scroll */
+    }
+    
+    .msg { 
+      max-width: 85%; 
+      padding: 10px 12px; 
+      border-radius: var(--radius-md); 
+      border: 1px solid var(--border-light); 
+      background: var(--message-bg);
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0.7; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .me { 
+      align-self: flex-end; 
+      background: var(--my-message-bg);
+      border-color: rgba(120, 160, 255, .2);
+    }
+    
+    .meta { 
+      font-size: 0.8rem; 
+      opacity: .7; 
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .time {
+      font-size: 0.7rem;
+      opacity: 0.6;
+    }
+    
+    .msg-content {
+      line-height: 1.4;
+    }
+    
+    form { 
+      display: flex; 
+      gap: 10px; 
+      padding: 12px; 
+      border-top: 1px solid var(--border-light); 
+      background: var(--form-bg);
+      flex-shrink: 0;
+    }
+    
+    input { 
+      flex: 1; 
+      padding: 12px; 
+      outline: none; 
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-light);
+      background: var(--input-bg);
+      color: var(--text-color);
+      font-size: 1rem;
+      min-width: 0; /* Flex item'ın küçülmesi için */
+    }
+    
+    input::placeholder {
+      color: rgba(231, 238, 252, 0.6);
+    }
+    
+    /* Mobil cihazlar için responsive stiller */
+    @media (max-width: 768px) {
+      .wrap {
+        padding: 8px;
+        height: 100vh;
+      }
+      
+      .top {
+        padding: 4px 0;
+      }
+      
+      .top h2 {
+        font-size: 1.1rem;
+        max-width: 60%;
+      }
+      
+      .auth-section {
+        gap: 6px;
+      }
+      
+      button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+      }
+      
+      .pill {
+        font-size: 0.75rem;
+        padding: 5px 8px;
+        max-width: 120px;
+      }
+      
+      .msgs {
+        padding: 10px;
+      }
+      
+      .msg {
+        max-width: 90%;
+        padding: 8px 10px;
+      }
+      
+      .meta {
+        font-size: 0.75rem;
+      }
+      
+      .msg-content {
+        font-size: 0.95rem;
+      }
+      
+      form {
+        padding: 10px;
+        gap: 8px;
+      }
+      
+      input {
+        padding: 10px;
+        font-size: 0.95rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .wrap {
+        padding: 6px;
+      }
+      
+      .top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      
+      .top h2 {
+        max-width: 100%;
+        font-size: 1rem;
+      }
+      
+      .auth-section {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .pill {
+        max-width: 150px;
+      }
+      
+      .chat {
+        margin-top: 8px;
+        border-radius: var(--radius-md);
+      }
+      
+      .msg {
+        max-width: 95%;
+      }
+      
+      .msgs {
+        padding: 8px;
+        gap: 8px;
+      }
+      
+      form {
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      input, button {
+        width: 100%;
+      }
+      
+      #send {
+        padding: 10px;
+      }
+    }
+    
+    /* Çok küçük ekranlar için */
+    @media (max-width: 360px) {
+      .top h2 {
+        font-size: 0.9rem;
+      }
+      
+      button {
+        font-size: 0.8rem;
+        padding: 7px 10px;
+      }
+      
+      .pill {
+        font-size: 0.7rem;
+        max-width: 100px;
+      }
+      
+      .msg {
+        padding: 7px 9px;
+      }
+      
+      .meta {
+        font-size: 0.7rem;
+      }
+      
+      .msg-content {
+        font-size: 0.9rem;
+      }
+    }
+    
+    /* Koyu tema için ek renkler */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary-bg: #0a0e15;
+        --secondary-bg: rgba(255, 255, 255, .02);
+        --message-bg: rgba(255, 255, 255, .03);
+        --my-message-bg: rgba(100, 140, 255, .15);
+      }
+    }
+    
+    /* Yüksek kontrast modu desteği */
+    @media (prefers-contrast: high) {
+      :root {
+        --border-color: rgba(255, 255, 255, .3);
+        --border-light: rgba(255, 255, 255, .25);
+      }
+    }
+    
+    /* iOS input stil düzeltmesi */
+    input[type="text"] {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    
+    /* Mesajlarda görsel medya için */
+    .msg img, .msg video {
+      max-width: 100%;
+      border-radius: var(--radius-sm);
+      margin-top: 5px;
+    }
+    
+    /* Scrollbar stilleri */
+    .msgs::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .msgs::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+    
+    .msgs::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+    
+    .msgs::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    
+    /* Firefox için scrollbar */
+    .msgs {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Online kullanıcı sayısı gösterimi */
+    .online-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-left: 8px;
+    }
+    
+    .online-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #4CAF50;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    /* Mesaj gönderildiğinde feedback */
+    .sending {
+      opacity: 0.7;
+    }
+    
+    /* Boş mesaj listesi durumu */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: rgba(231, 238, 252, 0.5);
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .empty-state p {
+      margin: 10px 0 0 0;
+      font-size: 0.9rem;
+    }
+    
+    /* Klavye açıkken mobilde daha iyi deneyim */
+    @media (max-height: 500px) {
+      .wrap {
+        height: auto;
+        min-height: 100vh;
+      }
+      
+      .msgs {
+        max-height: 60vh;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="top">
-      <h2 style="margin:0">Basit Chat (Firestore)</h2>
-      <div style="display:flex; gap:10px; align-items:center;">
+      <h2>Basit Chat (Firestore)</h2>
+      <div class="auth-section">
         <button id="login" type="button">Google ile giriş</button>
         <button id="logout" type="button" style="display:none;">Çıkış</button>
         <div class="pill" id="status">Giriş bekleniyor…</div>
@@ -33,7 +450,12 @@
     </div>
 
     <div class="chat">
-      <div class="msgs" id="msgs"></div>
+      <div class="msgs" id="msgs">
+        <div class="empty-state" id="emptyState">
+          <div>💬</div>
+          <p>Henüz mesaj yok. İlk mesajı sen gönder!</p>
+        </div>
+      </div>
       <form id="form">
         <input id="text" maxlength="1000" placeholder="Mesaj yaz…" autocomplete="off" />
         <button id="send" disabled>Gönder</button>
@@ -50,7 +472,6 @@
       getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // ✅ Burayı Firebase Console -> Project settings -> Your apps -> Web app'ten aldığın config ile birebir yap.
     const firebaseConfig = {
       apiKey: "AIzaSyDN0zwDiK0MveXRkykgkhG-p-oqBvanF7U",
       authDomain: "websitelerico.firebaseapp.com",
@@ -68,6 +489,7 @@
 
     const roomId = "public";
     const msgsEl = document.getElementById("msgs");
+    const emptyStateEl = document.getElementById("emptyState");
     const statusEl = document.getElementById("status");
     const form = document.getElementById("form");
     const textEl = document.getElementById("text");
@@ -77,30 +499,81 @@
 
     let uid = null;
     let unsubscribe = null;
+    let lastMessageTime = null;
 
     const esc = (s) =>
       (s || "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
-    function scrollBottom() { msgsEl.scrollTop = msgsEl.scrollHeight; }
+    function scrollBottom() { 
+      setTimeout(() => {
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      }, 100);
+    }
+
+    function formatTime(timestamp) {
+      if (!timestamp) return '';
+      
+      let date;
+      if (timestamp.toDate) {
+        date = timestamp.toDate();
+      } else if (timestamp instanceof Date) {
+        date = timestamp;
+      } else {
+        return '';
+      }
+      
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      
+      if (diffMins < 1) {
+        return 'şimdi';
+      } else if (diffMins < 60) {
+        return `${diffMins} dk`;
+      } else if (diffHours < 24) {
+        return `${diffHours} sa`;
+      } else {
+        return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      }
+    }
 
     function render(d) {
       const mine = d.uid === uid;
       const el = document.createElement("div");
       el.className = "msg" + (mine ? " me" : "");
+      
+      const messageTime = d.createdAt ? formatTime(d.createdAt) : '';
+      const displayName = mine ? "sen" : esc(d.name || d.uid?.slice(0,6) || "user");
+      
       el.innerHTML = `
-        <div class="meta">${mine ? "sen" : esc(d.name || d.uid?.slice(0,6) || "user")}</div>
-        <div>${esc(d.text)}</div>
+        <div class="meta">
+          <span>${displayName}</span>
+          ${messageTime ? `<span class="time">${messageTime}</span>` : ''}
+        </div>
+        <div class="msg-content">${esc(d.text)}</div>
       `;
+      
       msgsEl.appendChild(el);
+      
+      // Boş durum mesajını gizle
+      if (emptyStateEl) {
+        emptyStateEl.style.display = 'none';
+      }
     }
 
     loginBtn.addEventListener("click", async () => {
       try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = "Giriş yapılıyor...";
         await signInWithPopup(auth, provider);
       } catch (e) {
         console.error(e);
         statusEl.textContent = "Google giriş hata";
-        alert(e.code || e.message);
+        alert(e.code === 'auth/popup-closed-by-user' ? 'Giriş penceresi kapatıldı' : 'Giriş hatası: ' + (e.code || e.message));
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Google ile giriş";
       }
     });
 
@@ -109,7 +582,6 @@
     });
 
     onAuthStateChanged(auth, (user) => {
-      // önceki snapshot listener varsa kapat
       if (unsubscribe) { unsubscribe(); unsubscribe = null; }
 
       if (!user) {
@@ -118,12 +590,20 @@
         sendBtn.disabled = true;
         loginBtn.style.display = "inline-block";
         logoutBtn.style.display = "none";
-        msgsEl.innerHTML = "";
+        msgsEl.innerHTML = '';
+        
+        // Boş durum mesajını göster
+        if (emptyStateEl) {
+          emptyStateEl.style.display = 'flex';
+        }
+        
         return;
       }
 
       uid = user.uid;
-      statusEl.textContent = user.displayName || user.email || "Bağlandı";
+      const displayName = user.displayName || user.email || "Kullanıcı";
+      statusEl.textContent = displayName.length > 15 ? displayName.substring(0, 15) + '...' : displayName;
+      statusEl.title = displayName; // Tam adı tooltip olarak göster
       sendBtn.disabled = false;
       loginBtn.style.display = "none";
       logoutBtn.style.display = "inline-block";
@@ -133,11 +613,27 @@
 
       unsubscribe = onSnapshot(q, (snap) => {
         msgsEl.innerHTML = "";
-        snap.forEach(doc => render(doc.data()));
-        scrollBottom();
+        
+        if (snap.empty && emptyStateEl) {
+          emptyStateEl.style.display = 'flex';
+        } else {
+          if (emptyStateEl) emptyStateEl.style.display = 'none';
+          
+          snap.forEach(doc => {
+            const data = doc.data();
+            render(data);
+            
+            // Son mesaj zamanını kaydet
+            if (data.createdAt) {
+              lastMessageTime = data.createdAt;
+            }
+          });
+          
+          scrollBottom();
+        }
       }, (e) => {
         console.error(e);
-        statusEl.textContent = "Firestore hata";
+        statusEl.textContent = "Bağlantı hatası";
       });
     });
 
@@ -147,6 +643,8 @@
       if (!text || !uid) return;
 
       sendBtn.disabled = true;
+      sendBtn.textContent = "Gönderiliyor...";
+      
       try {
         const messagesRef = collection(db, "rooms", roomId, "messages");
         await addDoc(messagesRef, {
@@ -158,11 +656,65 @@
         textEl.value = "";
       } catch (err) {
         console.error(err);
-        alert("Gönderilemedi. Firestore Rules/izin kontrol et.");
+        alert("Mesaj gönderilemedi. Lütfen internet bağlantınızı kontrol edin.");
       } finally {
         sendBtn.disabled = false;
+        sendBtn.textContent = "Gönder";
         textEl.focus();
+        
+        // Mobil klavye için tekrar odaklan
+        if (window.innerWidth < 768) {
+          setTimeout(() => {
+            textEl.focus();
+          }, 100);
+        }
       }
+    });
+
+    // Enter tuşu ile gönder, Shift+Enter ile yeni satır
+    textEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtn.disabled) {
+          form.dispatchEvent(new Event("submit"));
+        }
+      }
+    });
+
+    // Sayfa yüklendiğinde input'a odaklan
+    window.addEventListener("load", () => {
+      // Kısa bir gecikme ile odaklan
+      setTimeout(() => {
+        textEl.focus();
+      }, 500);
+    });
+
+    // Klavye açıkken mesaj alanını ayarla (mobil için)
+    let initialViewportHeight = window.innerHeight;
+    
+    window.addEventListener("resize", () => {
+      // Bu mobil klavye açıldığında viewport değişimini tespit etmek için
+      if (window.innerHeight < initialViewportHeight * 0.7) {
+        // Klavye açıldı, son mesaja kaydır
+        scrollBottom();
+      }
+    });
+    
+    // Çevrimdışı durumda uyarı
+    window.addEventListener("online", () => {
+      statusEl.style.color = ""; // Varsayılan renge dön
+    });
+    
+    window.addEventListener("offline", () => {
+      const originalText = statusEl.textContent;
+      statusEl.textContent = "Çevrimdışı";
+      statusEl.style.color = "#ff6b6b";
+      
+      // Çevrimiçi olunca eski metne dön
+      window.addEventListener("online", () => {
+        statusEl.textContent = originalText;
+        statusEl.style.color = "";
+      }, { once: true });
     });
   </script>
 </body>
