@@ -89,9 +89,19 @@ logoutBtn.addEventListener("click", async () => {
   await signOut(auth);
 });
 
-const esc = (s) => (s || "").replace(/[&<>"']/g, c => ({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-}[c]));
+const esc = (v) => {
+  if (v === null || v === undefined) return "";
+  // Firestore Timestamp olabilir
+  if (typeof v === "object" && typeof v.toDate === "function") {
+    v = v.toDate().toISOString();
+  }
+  // her şeyi stringe çevir
+  const s = String(v);
+  return s.replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+};
+
 
 function formatTime(ts) {
   if (!ts?.toDate) return "";
@@ -551,7 +561,7 @@ function renderExpensesList() {
         card.innerHTML = `
         <div class="expense-header">
             <div class="expense-title">${esc(expense.title)}</div>
-            <div class="expense-amount">${esc(expense.amount)} ${esc(expense.currency)}</div>
+            <div class="expense-amount">${Number(expense.amount || 0)} ${esc(expense.currency || "TRY")}</div>
         </div>
         <div class="expense-details">
             <div class="expense-meta">
@@ -565,9 +575,11 @@ function renderExpensesList() {
             <div class="expense-participants">
             <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Katılımcılar:</div>
             <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                ${participantNames.split(', ').map(name => `
-                <span class="chip">${esc(name)}</span>
-                `).join('')}
+                ${participantNames
+                .split(', ')
+                .filter(Boolean)
+                .map(name => `<span class="chip">${esc(name)}</span>`)
+                .join('')}
             </div>
             </div>
         </div>
@@ -621,12 +633,15 @@ function showExpenseDetail(expenseId) {
   
   selectedExpenseId = expenseId;
   
-  const participantNames = expense.participants?.map(p => {
-    return p.type === 'manual' ? p.name : 
-           usersCache.find(u => u.uid === p.uid)?.displayName || 
-           usersCache.find(u => u.uid === p.uid)?.email || 
-           p.uid?.slice(0,6);
-  }).join(', ') || '';
+  const participantNames = (expense.participants || []).map(p => {
+  const n =
+    p?.type === "manual" ? p?.name :
+    usersCache.find(u => u.uid === p?.uid)?.displayName ||
+    usersCache.find(u => u.uid === p?.uid)?.email ||
+    (p?.uid ? p.uid.slice(0, 6) : "");
+  return String(n || "");
+}).filter(Boolean).join(", ");
+
   
   expenseDetailContent.innerHTML = `
     <div style="margin-bottom: 16px;">
