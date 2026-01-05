@@ -8,6 +8,28 @@ import {
   getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+/* ---------- GLOBAL ERROR CAPTURE ---------- */
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("UNHANDLED PROMISE:", e.reason);
+  alert("Unhandled promise: " + (e.reason?.code || "") + " " + (e.reason?.message || e.reason));
+});
+
+window.addEventListener("error", (e) => {
+  console.error("WINDOW ERROR:", e.error || e.message);
+});
+
+/* ---------- SAFE WRAPPER ---------- */
+async function safe(label, fn) {
+  try {
+    return await fn();
+  } catch (e) {
+    console.error(`[${label}]`, e);
+    alert(`${label} hata: ${e.code || ""} ${e.message || e}`);
+    throw e;
+  }
+}
+
+/* ---------- FIREBASE ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyDN0zwDiK0MveXRkykgkhG-p-oqBvanF7U",
   authDomain: "websitelerico.firebaseapp.com",
@@ -24,7 +46,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// ----- View mode
+/* ---------- VIEW MODE ---------- */
 const params = new URLSearchParams(location.search);
 const view = params.get("view") || "chat";
 
@@ -66,7 +88,7 @@ backToChatLocal.addEventListener("click", () => {
   location.href = currentBaseUrl() + "?view=chat";
 });
 
-// ----- Auth
+/* ---------- AUTH UI ---------- */
 const statusEl = document.getElementById("status");
 const loginBtn = document.getElementById("login");
 const logoutBtn = document.getElementById("logout");
@@ -75,10 +97,10 @@ loginBtn.addEventListener("click", async () => {
   try {
     loginBtn.disabled = true;
     loginBtn.textContent = "Giriş yapılıyor...";
-    await signInWithPopup(auth, provider);
+    await safe("Login popup", () => signInWithPopup(auth, provider));
   } catch (e) {
     console.error(e);
-    alert(e.code === 'auth/popup-closed-by-user' ? 'Giriş penceresi kapatıldı' : 'Giriş hatası');
+    alert(e.code === "auth/popup-closed-by-user" ? "Giriş penceresi kapatıldı" : `Giriş hatası: ${e.code || ""} ${e.message || e}`);
   } finally {
     loginBtn.disabled = false;
     loginBtn.textContent = "Google ile giriş";
@@ -86,27 +108,25 @@ loginBtn.addEventListener("click", async () => {
 });
 
 logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
+  await safe("Logout", () => signOut(auth));
 });
 
+/* ---------- HELPERS ---------- */
 const esc = (v) => {
   if (v === null || v === undefined) return "";
-  // Firestore Timestamp olabilir
   if (typeof v === "object" && typeof v.toDate === "function") {
     v = v.toDate().toISOString();
   }
-  // her şeyi stringe çevir
   const s = String(v);
   return s.replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 };
-
 
 function formatTime(ts) {
   if (!ts?.toDate) return "";
   const d = ts.toDate();
-  return d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute:"2-digit" });
+  return d.toLocaleDateString("tr-TR") + " " + d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
 
 function formatDateAny(x) {
@@ -116,20 +136,22 @@ function formatDateAny(x) {
   return "";
 }
 
-// ----- USERS
+/* ---------- USERS ---------- */
 async function upsertUser(user) {
   if (!user) return;
   const userRef = doc(db, "users", user.uid);
-  await setDoc(userRef, {
-    uid: user.uid,
-    displayName: user.displayName || "",
-    email: user.email || "",
-    photoURL: user.photoURL || "",
-    lastSeenAt: serverTimestamp()
-  }, { merge: true });
+  await safe("User upsert", () =>
+    setDoc(userRef, {
+      uid: user.uid,
+      displayName: user.displayName || "",
+      email: user.email || "",
+      photoURL: user.photoURL || "",
+      lastSeenAt: serverTimestamp()
+    }, { merge: true })
+  );
 }
 
-// ----- CHAT
+/* ---------- CHAT ---------- */
 const msgsEl = document.getElementById("msgs");
 const chatForm = document.getElementById("chatForm");
 const chatText = document.getElementById("chatText");
@@ -165,16 +187,15 @@ chatForm?.addEventListener("submit", async (e) => {
   sendChat.textContent = "Gönderiliyor...";
   try {
     const messagesRef = collection(db, "rooms", "public", "messages");
-    await addDoc(messagesRef, {
-      text,
-      uid,
-      name: auth.currentUser?.displayName || auth.currentUser?.email || "user",
-      createdAt: serverTimestamp()
-    });
+    await safe("Chat mesajı gönder", () =>
+      addDoc(messagesRef, {
+        text,
+        uid,
+        name: auth.currentUser?.displayName || auth.currentUser?.email || "user",
+        createdAt: serverTimestamp()
+      })
+    );
     chatText.value = "";
-  } catch (err) {
-    console.error(err);
-    alert("Mesaj gönderilemedi. İnternet bağlantınızı kontrol edin.");
   } finally {
     sendChat.disabled = false;
     sendChat.textContent = "Gönder";
@@ -182,7 +203,7 @@ chatForm?.addEventListener("submit", async (e) => {
   }
 });
 
-// ----- ENHANCED SETTLEMENT SYSTEM
+/* ---------- SETTLEMENT ---------- */
 const stTitle = document.getElementById("stTitle");
 const stAmount = document.getElementById("stAmount");
 const stCurrency = document.getElementById("stCurrency");
@@ -216,8 +237,8 @@ const editExpenseBtn = document.getElementById("editExpense");
 const deleteExpenseBtn = document.getElementById("deleteExpense");
 const expenseDetailContent = document.getElementById("expenseDetailContent");
 
-// Set today's date as default
-stDate.value = new Date().toISOString().split('T')[0];
+// default date
+stDate.value = new Date().toISOString().split("T")[0];
 
 let usersCache = [];
 let manualParticipants = [];
@@ -225,67 +246,57 @@ let selectedParticipants = new Set();
 let payerId = null;
 let allExpenses = [];
 let selectedExpenseId = null;
+let editingExpenseId = null;
 
 async function loadUsersForParticipants() {
   const usersRef = collection(db, "users");
-  const snap = await getDocs(usersRef);
+  const snap = await safe("Kullanıcıları yükle", () => getDocs(usersRef));
   usersCache = [];
   snap.forEach(d => usersCache.push(d.data()));
   renderParticipantsList();
 }
 
 function renderParticipantsList() {
-  participantsContainer.innerHTML = '';
-  
-  // Add current user first
+  participantsContainer.innerHTML = "";
+
   const currentUser = usersCache.find(u => u.uid === uid);
-  if (currentUser) {
-    addParticipantItem(currentUser);
-  }
-  
-  // Add other users
+  if (currentUser) addParticipantItem(currentUser);
+
   usersCache.forEach(user => {
-    if (user.uid !== uid) {
-      addParticipantItem(user);
-    }
+    if (user.uid !== uid) addParticipantItem(user);
   });
-  
-  // Add manual participants
-  manualParticipants.forEach((name, index) => {
-    addManualParticipantItem(name, index);
-  });
-  
+
+  manualParticipants.forEach((name, index) => addManualParticipantItem(name, index));
+
   updateSelectedCount();
   renderPayerOptions();
   updateSelectedCount();
 }
 
 function addParticipantItem(user) {
-  const item = document.createElement('div');
-  item.className = 'participant-item';
+  const item = document.createElement("div");
+  item.className = "participant-item";
   item.dataset.id = user.uid;
-  item.dataset.type = 'user';
+  item.dataset.type = "user";
   item.dataset.name = user.displayName || user.email || user.uid;
-  
+
   const isSelected = selectedParticipants.has(user.uid);
   const isPayer = payerId === user.uid;
-  
-  if (isSelected) item.classList.add('selected');
-  if (isPayer) item.classList.add('payer');
-  
+
+  if (isSelected) item.classList.add("selected");
+  if (isPayer) item.classList.add("payer");
+
   item.innerHTML = `
     <div class="checkbox"></div>
     <div class="participant-name">${esc(user.displayName || user.email || user.uid)}</div>
-    ${isPayer ? '<div class="role-badge">Ödeyen</div>' : ''}
+    ${isPayer ? '<div class="role-badge">Ödeyen</div>' : ""}
   `;
-  
-  item.addEventListener('click', (e) => {
-    if (e.target.closest('.participant-item') === item) {
+
+  item.addEventListener("click", (e) => {
+    if (e.target.closest(".participant-item") === item) {
       if (e.ctrlKey || e.metaKey) {
-        // Ctrl-click to set as payer
         payerId = user.uid;
       } else {
-        // Regular click to toggle selection
         if (selectedParticipants.has(user.uid)) {
           selectedParticipants.delete(user.uid);
           if (payerId === user.uid) payerId = null;
@@ -296,32 +307,32 @@ function addParticipantItem(user) {
       renderParticipantsList();
     }
   });
-  
+
   participantsContainer.appendChild(item);
 }
 
 function addManualParticipantItem(name, index) {
-  const item = document.createElement('div');
-  item.className = 'participant-item';
+  const item = document.createElement("div");
+  item.className = "participant-item";
   item.dataset.id = `manual_${index}`;
-  item.dataset.type = 'manual';
+  item.dataset.type = "manual";
   item.dataset.name = name;
-  
+
   const isSelected = selectedParticipants.has(`manual_${index}`);
   const isPayer = payerId === `manual_${index}`;
-  
-  if (isSelected) item.classList.add('selected');
-  if (isPayer) item.classList.add('payer');
-  
+
+  if (isSelected) item.classList.add("selected");
+  if (isPayer) item.classList.add("payer");
+
   item.innerHTML = `
     <div class="checkbox"></div>
     <div class="participant-name">${esc(name)}</div>
     <div class="chip manual">manuel</div>
-    ${isPayer ? '<div class="role-badge">Ödeyen</div>' : ''}
+    ${isPayer ? '<div class="role-badge">Ödeyen</div>' : ""}
   `;
-  
-  item.addEventListener('click', (e) => {
-    if (e.target.closest('.participant-item') === item) {
+
+  item.addEventListener("click", (e) => {
+    if (e.target.closest(".participant-item") === item) {
       if (e.ctrlKey || e.metaKey) {
         payerId = `manual_${index}`;
       } else {
@@ -335,7 +346,7 @@ function addManualParticipantItem(name, index) {
       renderParticipantsList();
     }
   });
-  
+
   participantsContainer.appendChild(item);
 }
 
@@ -345,49 +356,59 @@ function updateSelectedCount() {
   saveExpenseBtn.disabled = count === 0 || !stTitle.value.trim() || !stAmount.value || !payerId;
 }
 
-selectAllParticipants.addEventListener('click', () => {
+selectAllParticipants.addEventListener("click", () => {
   selectedParticipants.clear();
   usersCache.forEach(user => selectedParticipants.add(user.uid));
   manualParticipants.forEach((_, index) => selectedParticipants.add(`manual_${index}`));
-  if (usersCache.length > 0 && !payerId) {
-    payerId = usersCache[0].uid;
-  }
+  if (usersCache.length > 0 && !payerId) payerId = usersCache[0].uid;
   renderParticipantsList();
 });
 
-clearSelection.addEventListener('click', () => {
+clearSelection.addEventListener("click", () => {
   selectedParticipants.clear();
   payerId = null;
   renderParticipantsList();
 });
 
-addManualParticipantBtn.addEventListener('click', () => {
+addManualParticipantBtn.addEventListener("click", () => {
   const name = stManualName.value.trim();
   if (!name) return;
   manualParticipants.push(name);
-  stManualName.value = '';
+  stManualName.value = "";
   stStatus.textContent = `Manuel katılımcı eklendi: ${name}`;
-  setTimeout(() => stStatus.textContent = 'Hazır', 1500);
+  setTimeout(() => stStatus.textContent = "Hazır", 1500);
   renderParticipantsList();
 });
 
-clearFormBtn.addEventListener('click', () => {
-  stTitle.value = '';
-  stAmount.value = '';
-  stNote.value = '';
-  stDate.value = new Date().toISOString().split('T')[0];
-  stManualName.value = '';
+clearFormBtn.addEventListener("click", () => {
+  stTitle.value = "";
+  stAmount.value = "";
+  stNote.value = "";
+  stDate.value = new Date().toISOString().split("T")[0];
+  stManualName.value = "";
   selectedParticipants.clear();
   payerId = null;
   manualParticipants = [];
+  editingExpenseId = null;
+  saveExpenseBtn.textContent = "Kaydet";
   renderParticipantsList();
-  stStatus.textContent = 'Form temizlendi';
+  stStatus.textContent = "Form temizlendi";
 });
 
-stTitle.addEventListener('input', updateSelectedCount);
-stAmount.addEventListener('input', updateSelectedCount);
+stTitle.addEventListener("input", updateSelectedCount);
+stAmount.addEventListener("input", updateSelectedCount);
 
-saveExpenseBtn.addEventListener('click', async () => {
+function getParticipantName(id) {
+  if (!id) return "";
+  if (id.startsWith("manual_")) {
+    const index = parseInt(id.split("_")[1], 10);
+    return manualParticipants[index] || "";
+  }
+  const user = usersCache.find(u => u.uid === id);
+  return user?.displayName || user?.email || id;
+}
+
+saveExpenseBtn.addEventListener("click", async () => {
   if (!uid) return;
 
   const title = stTitle.value.trim();
@@ -397,122 +418,95 @@ saveExpenseBtn.addEventListener('click', async () => {
   const category = stCategory.value;
   const note = stNote.value.trim();
 
-  if (!title) {
-    alert('Harcama başlığı gerekli');
-    return;
-  }
-
-  if (!amount || amount <= 0) {
-    alert('Geçerli bir tutar girin');
-    return;
-  }
-
-  if (selectedParticipants.size === 0) {
-    alert('En az bir katılımcı seçin');
-    return;
-  }
-
-  if (!payerId) {
-    alert('Ödeyen kişiyi belirleyin (Ctrl+Click ile)');
-    return;
-  }
+  if (!title) return alert("Harcama başlığı gerekli");
+  if (!amount || amount <= 0) return alert("Geçerli bir tutar girin");
+  if (selectedParticipants.size === 0) return alert("En az bir katılımcı seçin");
+  if (!payerId) return alert("Ödeyen kişiyi belirleyin (Ctrl+Click ile)");
 
   const participants = [];
   selectedParticipants.forEach(id => {
-    if (id.startsWith('manual_')) {
-      const index = parseInt(id.split('_')[1]);
-      participants.push({
-        type: 'manual',
-        name: manualParticipants[index]
-      });
+    if (id.startsWith("manual_")) {
+      const index = parseInt(id.split("_")[1], 10);
+      participants.push({ type: "manual", name: manualParticipants[index] });
     } else {
       const user = usersCache.find(u => u.uid === id);
-      participants.push({
-        type: 'user',
-        uid: id,
-        name: user?.displayName || user?.email || id
-      });
+      participants.push({ type: "user", uid: id, name: user?.displayName || user?.email || id });
     }
   });
 
   saveExpenseBtn.disabled = true;
-  saveExpenseBtn.classList.add('loading');
-  stStatus.textContent = 'Kaydediliyor...';
+  saveExpenseBtn.classList.add("loading");
+  stStatus.textContent = editingExpenseId ? "Güncelleniyor..." : "Kaydediliyor...";
 
   try {
-    await addDoc(collection(db, "expenses"), {
-      title,
-      amount,
-      currency,
-      date,
-      category,
-      note,
+    const payload = {
+      title, amount, currency, date, category, note,
       participants,
       payer: payerId,
       payerName: getParticipantName(payerId),
-      createdByUid: uid,
-      createdByName: auth.currentUser?.displayName || auth.currentUser?.email || "user",
-      createdAt: serverTimestamp()
-    });
+      updatedAt: serverTimestamp()
+    };
 
-    stStatus.textContent = 'Harcama kaydedildi ✅';
-    setTimeout(() => stStatus.textContent = 'Hazır', 1500);
-    
-    // Clear form
-    stTitle.value = '';
-    stAmount.value = '';
-    stNote.value = '';
+    if (editingExpenseId) {
+      await safe("Harcama güncelle", () =>
+        updateDoc(doc(db, "expenses", editingExpenseId), payload)
+      );
+      stStatus.textContent = "Harcama güncellendi ✅";
+    } else {
+      await safe("Harcama kaydet", () =>
+        addDoc(collection(db, "expenses"), {
+          ...payload,
+          createdByUid: uid,
+          createdByName: auth.currentUser?.displayName || auth.currentUser?.email || "user",
+          createdAt: serverTimestamp()
+        })
+      );
+      stStatus.textContent = "Harcama kaydedildi ✅";
+    }
+
+    setTimeout(() => stStatus.textContent = "Hazır", 1500);
+
+    // reset
+    stTitle.value = "";
+    stAmount.value = "";
+    stNote.value = "";
     selectedParticipants.clear();
     payerId = null;
+    manualParticipants = [];
+    editingExpenseId = null;
+    saveExpenseBtn.textContent = "Kaydet";
     renderParticipantsList();
-  } catch (e) {
-    console.error(e);
-    alert('Kaydedilemedi. İnternet bağlantınızı kontrol edin.');
-    stStatus.textContent = 'Hata';
+  } catch {
+    stStatus.textContent = "Hata";
   } finally {
     saveExpenseBtn.disabled = false;
-    saveExpenseBtn.classList.remove('loading');
+    saveExpenseBtn.classList.remove("loading");
   }
-  await loadExpenses();
-});
 
-function getParticipantName(id) {
-  if (id.startsWith('manual_')) {
-    const index = parseInt(id.split('_')[1]);
-    return manualParticipants[index];
-  } else {
-    const user = usersCache.find(u => u.uid === id);
-    return user?.displayName || user?.email || id;
-  }
-}
+  await safe("Harcama listesini yenile", () => loadExpenses());
+});
 
 async function loadExpenses() {
   try {
-    expensesList.innerHTML = `
-      <div class="text-center" style="opacity:.7; padding: 20px;">Yükleniyor…</div>
-    `;
+    expensesList.innerHTML = `<div class="text-center" style="opacity:.7; padding: 20px;">Yükleniyor…</div>`;
 
     const expensesRef = collection(db, "expenses");
-
     let snap;
+
     try {
       const q1 = query(expensesRef, orderBy("createdAt", "desc"));
-      snap = await getDocs(q1);
+      snap = await safe("Harcama listele (createdAt)", () => getDocs(q1));
     } catch (e) {
-      console.warn("createdAt orderBy başarısız, date ile fallback:", e);
-
+      console.warn("createdAt orderBy başarısız, date fallback:", e);
       const q2 = query(expensesRef, orderBy("date", "desc"));
-      snap = await getDocs(q2);
+      snap = await safe("Harcama listele (date)", () => getDocs(q2));
     }
 
     allExpenses = [];
-    snap.forEach(d => {
-      allExpenses.push({ id: d.id, ...d.data() });
-    });
+    snap.forEach(d => allExpenses.push({ id: d.id, ...d.data() }));
 
     renderExpensesList();
     updateExpensesCount();
-
   } catch (e) {
     console.error("loadExpenses hata:", e);
     expensesList.innerHTML = `
@@ -527,15 +521,14 @@ async function loadExpenses() {
   }
 }
 
-
 function renderExpensesList() {
-  expensesList.innerHTML = '';
-  
+  expensesList.innerHTML = "";
+
   const categoryFilter = filterCategory.value;
-  const filteredExpenses = categoryFilter 
+  const filteredExpenses = categoryFilter
     ? allExpenses.filter(exp => exp.category === categoryFilter)
     : allExpenses;
-  
+
   if (filteredExpenses.length === 0) {
     expensesList.innerHTML = `
       <div class="text-center" style="opacity: 0.7; padding: 40px;">
@@ -544,63 +537,57 @@ function renderExpensesList() {
     `;
     return;
   }
-  
+
   filteredExpenses.forEach(expense => {
     try {
-        const card = document.createElement('div');
-        card.className = 'expense-card cursor-pointer';
-        card.dataset.id = expense.id;
-        
-        const participantNames = expense.participants?.map(p => {
-        return p.type === 'manual' ? p.name : 
-                usersCache.find(u => u.uid === p.uid)?.displayName || 
-                usersCache.find(u => u.uid === p.uid)?.email || 
-                p.uid?.slice(0,6);
-        }).join(', ') || '';
-        
-        card.innerHTML = `
+      const card = document.createElement("div");
+      card.className = "expense-card cursor-pointer";
+      card.dataset.id = expense.id;
+
+      const participantNames = expense.participants?.map(p => {
+        return p.type === "manual" ? p.name :
+          usersCache.find(u => u.uid === p.uid)?.displayName ||
+          usersCache.find(u => u.uid === p.uid)?.email ||
+          p.uid?.slice(0, 6);
+      }).join(", ") || "";
+
+      card.innerHTML = `
         <div class="expense-header">
-            <div class="expense-title">${esc(expense.title)}</div>
-            <div class="expense-amount">${Number(expense.amount || 0)} ${esc(expense.currency || "TRY")}</div>
+          <div class="expense-title">${esc(expense.title)}</div>
+          <div class="expense-amount">${Number(expense.amount || 0)} ${esc(expense.currency || "TRY")}</div>
         </div>
         <div class="expense-details">
-            <div class="expense-meta">
+          <div class="expense-meta">
             <div>📅 ${esc(formatDateAny(expense.date) || formatDateAny(expense.createdAt))}</div>
             <div>🏷️ ${esc(getCategoryLabel(expense.category))}</div>
-            <div>👤 ${esc(expense.payerName || '')} ödedi</div>
-            </div>
-            ${expense.note ? `
-            <div class="expense-note">${esc(expense.note)}</div>
-            ` : ''}
-            <div class="expense-participants">
+            <div>👤 ${esc(expense.payerName || "")} ödedi</div>
+          </div>
+          ${expense.note ? `<div class="expense-note">${esc(expense.note)}</div>` : ""}
+          <div class="expense-participants">
             <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Katılımcılar:</div>
             <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                ${participantNames
-                .split(', ')
-                .filter(Boolean)
-                .map(name => `<span class="chip">${esc(name)}</span>`)
-                .join('')}
+              ${participantNames.split(", ").filter(Boolean).map(name => `<span class="chip">${esc(name)}</span>`).join("")}
             </div>
-            </div>
+          </div>
         </div>
-        `;
-        
-        card.addEventListener('click', () => showExpenseDetail(expense.id));
-        expensesList.appendChild(card);
+      `;
+
+      card.addEventListener("click", () => showExpenseDetail(expense.id));
+      expensesList.appendChild(card);
     } catch (e) {
-        console.error("Expense render hatası, id:", expense?.id, e);
+      console.error("Expense render hatası, id:", expense?.id, e);
     }
   });
 }
 
 function getCategoryLabel(category) {
   const labels = {
-    'yemek': 'Yemek',
-    'market': 'Market',
-    'ulasim': 'Ulaşım',
-    'eglence': 'Eğlence',
-    'konaklama': 'Konaklama',
-    'diger': 'Diğer'
+    yemek: "Yemek",
+    market: "Market",
+    ulasim: "Ulaşım",
+    eglence: "Eğlence",
+    konaklama: "Konaklama",
+    diger: "Diğer"
   };
   return labels[category] || category;
 }
@@ -609,19 +596,19 @@ function updateExpensesCount() {
   expensesCount.textContent = `${allExpenses.length} harcama bulundu`;
 }
 
-refreshExpensesBtn.addEventListener('click', async () => {
+refreshExpensesBtn.addEventListener("click", async () => {
   refreshExpensesBtn.disabled = true;
   const old = refreshExpensesBtn.textContent;
   refreshExpensesBtn.textContent = "Yükleniyor…";
   try {
-    await loadExpenses();
+    await safe("Harcama yenile", () => loadExpenses());
   } finally {
     refreshExpensesBtn.disabled = false;
     refreshExpensesBtn.textContent = old;
   }
 });
 
-filterCategory.addEventListener('change', renderExpensesList);
+filterCategory.addEventListener("change", renderExpensesList);
 payerSelect?.addEventListener("change", () => {
   payerId = payerSelect.value || null;
   updateSelectedCount();
@@ -630,19 +617,9 @@ payerSelect?.addEventListener("change", () => {
 function showExpenseDetail(expenseId) {
   const expense = allExpenses.find(e => e.id === expenseId);
   if (!expense) return;
-  
-  selectedExpenseId = expenseId;
-  
-  const participantNames = (expense.participants || []).map(p => {
-  const n =
-    p?.type === "manual" ? p?.name :
-    usersCache.find(u => u.uid === p?.uid)?.displayName ||
-    usersCache.find(u => u.uid === p?.uid)?.email ||
-    (p?.uid ? p.uid.slice(0, 6) : "");
-  return String(n || "");
-}).filter(Boolean).join(", ");
 
-  
+  selectedExpenseId = expenseId;
+
   expenseDetailContent.innerHTML = `
     <div style="margin-bottom: 16px;">
       <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent);">
@@ -652,7 +629,7 @@ function showExpenseDetail(expenseId) {
         ${esc(expense.amount)} ${esc(expense.currency)}
       </div>
     </div>
-    
+
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
       <div>
         <div style="font-size: 0.85rem; opacity: 0.8;">Tarih</div>
@@ -665,15 +642,15 @@ function showExpenseDetail(expenseId) {
       <div>
         <div style="font-size: 0.85rem; opacity: 0.8;">Ödeyen</div>
         <div style="color: var(--accent-yellow); font-weight: 600;">
-          ${esc(expense.payerName || '')}
+          ${esc(expense.payerName || "")}
         </div>
       </div>
       <div>
         <div style="font-size: 0.85rem; opacity: 0.8;">Oluşturan</div>
-        <div>${esc(expense.createdByName || '')}</div>
+        <div>${esc(expense.createdByName || "")}</div>
       </div>
     </div>
-    
+
     ${expense.note ? `
       <div style="margin-bottom: 16px;">
         <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Notlar</div>
@@ -681,55 +658,107 @@ function showExpenseDetail(expenseId) {
           ${esc(expense.note)}
         </div>
       </div>
-    ` : ''}
-    
+    ` : ""}
+
     <div style="margin-bottom: 16px;">
       <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 8px;">Katılımcılar</div>
       <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-        ${expense.participants?.map(p => {
-          const name = p.type === 'manual' ? p.name : 
-                      usersCache.find(u => u.uid === p.uid)?.displayName || 
-                      usersCache.find(u => u.uid === p.uid)?.email || 
-                      p.uid?.slice(0,6);
-          return `<span class="chip ${p.uid === expense.payer ? 'payer' : 'user'}">${esc(name)}</span>`;
-        }).join('')}
+        ${(expense.participants || []).map(p => {
+          const name = p.type === "manual" ? p.name :
+            usersCache.find(u => u.uid === p.uid)?.displayName ||
+            usersCache.find(u => u.uid === p.uid)?.email ||
+            p.uid?.slice(0, 6);
+          return `<span class="chip ${p.uid === expense.payer ? "payer" : "user"}">${esc(name)}</span>`;
+        }).join("")}
       </div>
     </div>
-    
+
     <div style="font-size: 0.85rem; opacity: 0.7; margin-top: 16px;">
       Oluşturulma: ${esc(formatTime(expense.createdAt))}
     </div>
   `;
-  
-  expenseModal.classList.remove('hidden');
+
+  expenseModal.classList.remove("hidden");
 }
 
 closeModalBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    expenseModal.classList.add('hidden');
+  btn.addEventListener("click", () => {
+    expenseModal.classList.add("hidden");
     selectedExpenseId = null;
   });
 });
 
-editExpenseBtn.addEventListener('click', () => {
-  alert('Düzenleme özelliği yakında eklenecek');
+editExpenseBtn.addEventListener("click", () => {
+  if (!selectedExpenseId) return;
+
+  const expense = allExpenses.find(e => e.id === selectedExpenseId);
+  if (!expense) return;
+
+  editingExpenseId = expense.id;
+
+  stTitle.value = expense.title || "";
+  stAmount.value = expense.amount ?? "";
+  stCurrency.value = expense.currency || "TRY";
+  stDate.value = expense.date || new Date().toISOString().split("T")[0];
+  stCategory.value = expense.category || "diger";
+  stNote.value = expense.note || "";
+
+  manualParticipants = [];
+  selectedParticipants.clear();
+
+  const manualIndexByName = new Map();
+
+  (expense.participants || []).forEach(p => {
+    if (p?.type === "manual") {
+      const name = String(p?.name || "").trim();
+      if (!name) return;
+
+      if (!manualIndexByName.has(name)) {
+        manualParticipants.push(name);
+        manualIndexByName.set(name, manualParticipants.length - 1);
+      }
+      const idx = manualIndexByName.get(name);
+      selectedParticipants.add(`manual_${idx}`);
+    } else {
+      if (p?.uid) selectedParticipants.add(p.uid);
+    }
+  });
+
+  if (expense.payer?.startsWith?.("manual_")) {
+    const payerName = String(expense.payerName || "").trim();
+    if (payerName) {
+      if (!manualIndexByName.has(payerName)) {
+        manualParticipants.push(payerName);
+        manualIndexByName.set(payerName, manualParticipants.length - 1);
+      }
+      payerId = `manual_${manualIndexByName.get(payerName)}`;
+    } else {
+      payerId = null;
+    }
+  } else {
+    payerId = expense.payer || null;
+  }
+
+  saveExpenseBtn.textContent = "Güncelle";
+  stStatus.textContent = "Düzenleme modu: kaydı güncelle";
+  expenseModal.classList.add("hidden");
+  renderParticipantsList();
 });
 
-deleteExpenseBtn.addEventListener('click', async () => {
-  if (!selectedExpenseId || !confirm('Bu harcamayı silmek istediğinize emin misiniz?')) return;
-  
+deleteExpenseBtn.addEventListener("click", async () => {
+  if (!selectedExpenseId || !confirm("Bu harcamayı silmek istediğinize emin misiniz?")) return;
+
   try {
-    await deleteDoc(doc(db, "expenses", selectedExpenseId));
-    expenseModal.classList.add('hidden');
-    loadExpenses();
-    stStatus.textContent = 'Harcama silindi';
-  } catch (e) {
-    console.error(e);
-    alert('Silinemedi. İnternet bağlantınızı kontrol edin.');
+    await safe("Harcama sil", () => deleteDoc(doc(db, "expenses", selectedExpenseId)));
+    expenseModal.classList.add("hidden");
+    await safe("Harcama listesini yenile", () => loadExpenses());
+    stStatus.textContent = "Harcama silindi";
+  } catch {
+    // safe zaten alertledi
   }
 });
 
-calculateSettlementBtn.addEventListener('click', calculateSettlement);
+calculateSettlementBtn.addEventListener("click", calculateSettlement);
 
 function calculateSettlement() {
   if (allExpenses.length === 0) {
@@ -748,9 +777,9 @@ function calculateSettlement() {
   allExpenses.forEach(expense => {
     total.amount += expense.amount;
     total.count++;
-    
+
     expense.participants?.forEach(p => {
-      const id = p.type === 'manual' ? p.name : p.uid;
+      const id = p.type === "manual" ? p.name : p.uid;
       allParticipants.add(id);
     });
 
@@ -762,15 +791,13 @@ function calculateSettlement() {
       payerKey = expense.payerName || `manual_${idx}`;
     }
 
-    if (payerKey) {
-      balances[payerKey] = (balances[payerKey] || 0) + expense.amount;
-    }
+    if (payerKey) balances[payerKey] = (balances[payerKey] || 0) + expense.amount;
 
     const participantCount = expense.participants?.length || 1;
     const share = expense.amount / participantCount;
-    
+
     expense.participants?.forEach(p => {
-      const id = p.type === 'manual' ? p.name : p.uid;
+      const id = p.type === "manual" ? p.name : p.uid;
       balances[id] = (balances[id] || 0) - share;
     });
   });
@@ -778,9 +805,9 @@ function calculateSettlement() {
   totalExpenseEl.textContent = `${total.amount.toFixed(2)} TRY`;
   expenseCountEl.textContent = total.count;
   participantCountEl.textContent = allParticipants.size;
-  averagePerPersonEl.textContent = allParticipants.size > 0 
+  averagePerPersonEl.textContent = allParticipants.size > 0
     ? `${(total.amount / allParticipants.size).toFixed(2)} TRY`
-    : '0 TRY';
+    : "0 TRY";
 
   let tableHTML = `
     <table class="balance-table">
@@ -799,13 +826,13 @@ function calculateSettlement() {
     const isPositive = balance > 0;
     const isNegative = balance < 0;
     const absBalance = Math.abs(balance);
-    
+
     tableHTML += `
       <tr>
         <td>${esc(name)}</td>
-        <td>${isPositive ? 'Alacaklı' : isNegative ? 'Borçlu' : 'Dengeli'}</td>
-        <td class="amount-cell ${isPositive ? 'positive' : isNegative ? 'negative' : 'neutral'}">
-          ${isPositive ? '+' : isNegative ? '-' : ''}${absBalance.toFixed(2)} TRY
+        <td>${isPositive ? "Alacaklı" : isNegative ? "Borçlu" : "Dengeli"}</td>
+        <td class="amount-cell ${isPositive ? "positive" : isNegative ? "negative" : "neutral"}">
+          ${isPositive ? "+" : isNegative ? "-" : ""}${absBalance.toFixed(2)} TRY
         </td>
       </tr>
     `;
@@ -819,12 +846,9 @@ function calculateSettlement() {
   balanceTableContainer.innerHTML = tableHTML;
 }
 
-exportDataBtn.addEventListener('click', () => {
-  if (allExpenses.length === 0) {
-    alert('Dışa aktarılacak veri bulunmuyor');
-    return;
-  }
-  
+exportDataBtn.addEventListener("click", () => {
+  if (allExpenses.length === 0) return alert("Dışa aktarılacak veri bulunmuyor");
+
   const data = {
     expenses: allExpenses,
     summary: {
@@ -835,35 +859,36 @@ exportDataBtn.addEventListener('click', () => {
     },
     exportedAt: new Date().toISOString()
   };
-  
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
-  a.download = `mahsuplasma-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `mahsuplasma-${new Date().toISOString().split("T")[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  
-  stStatus.textContent = 'Veri dışa aktarıldı';
+
+  stStatus.textContent = "Veri dışa aktarıldı";
 });
 
-sendSummaryBtn.addEventListener('click', async () => {
+sendSummaryBtn.addEventListener("click", async () => {
   if (!uid) return;
-  
+
   try {
     const messagesRef = collection(db, "rooms", "public", "messages");
-    await addDoc(messagesRef, {
-      text: `📊 Mahsuplaşma özeti:\nToplam: ${totalExpenseEl.textContent}\nHarcama sayısı: ${expenseCountEl.textContent}\nKatılımcılar: ${participantCountEl.textContent}`,
-      uid,
-      name: auth.currentUser?.displayName || auth.currentUser?.email || "user",
-      createdAt: serverTimestamp()
-    });
-    
-    stStatus.textContent = 'Özet chat\'e gönderildi';
-    setTimeout(() => stStatus.textContent = 'Hazır', 1500);
-  } catch (err) {
-    console.error(err);
-    alert('Chat\'e gönderilemedi');
+    await safe("Özet chat'e gönder", () =>
+      addDoc(messagesRef, {
+        text: `📊 Mahsuplaşma özeti:\nToplam: ${totalExpenseEl.textContent}\nHarcama sayısı: ${expenseCountEl.textContent}\nKatılımcılar: ${participantCountEl.textContent}`,
+        uid,
+        name: auth.currentUser?.displayName || auth.currentUser?.email || "user",
+        createdAt: serverTimestamp()
+      })
+    );
+
+    stStatus.textContent = "Özet chat'e gönderildi";
+    setTimeout(() => stStatus.textContent = "Hazır", 1500);
+  } catch {
+    // safe zaten alertledi
   }
 });
 
@@ -886,7 +911,7 @@ function renderPayerOptions() {
   });
 
   options
-    .sort((a,b) => a.name.localeCompare(b.name, "tr"))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"))
     .forEach(o => {
       const opt = document.createElement("option");
       opt.value = o.id;
@@ -903,50 +928,55 @@ function renderPayerOptions() {
   }
 }
 
-// ----- Global auth state
+/* ---------- AUTH STATE ---------- */
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    uid = null;
-    statusEl.textContent = "Giriş bekleniyor…";
-    loginBtn.style.display = "inline-block";
-    logoutBtn.style.display = "none";
+  try {
+    if (!user) {
+      uid = null;
+      statusEl.textContent = "Giriş bekleniyor…";
+      loginBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
 
-    sendChat && (sendChat.disabled = true);
-    saveExpenseBtn && (saveExpenseBtn.disabled = true);
+      sendChat && (sendChat.disabled = true);
+      saveExpenseBtn && (saveExpenseBtn.disabled = true);
 
-    if (unsubChat) { unsubChat(); unsubChat = null; }
+      if (unsubChat) { unsubChat(); unsubChat = null; }
+      return;
+    }
 
-    return;
-  }
+    uid = user.uid;
+    const displayName = user.displayName || user.email || "Bağlandı";
+    statusEl.textContent = displayName.length > 18 ? displayName.slice(0, 18) + "…" : displayName;
+    statusEl.title = displayName;
 
-  uid = user.uid;
-  const displayName = user.displayName || user.email || "Bağlandı";
-  statusEl.textContent = displayName.length > 18 ? displayName.slice(0,18) + "…" : displayName;
-  statusEl.title = displayName;
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
 
-  loginBtn.style.display = "none";
-  logoutBtn.style.display = "inline-block";
+    await upsertUser(user);
 
-  await upsertUser(user);
+    if (view === "chat") {
+      sendChat.disabled = false;
 
-  if (view === "chat") {
-    sendChat.disabled = false;
+      if (unsubChat) { unsubChat(); unsubChat = null; }
+      const q = query(collection(db, "rooms", "public", "messages"), orderBy("createdAt", "asc"), limit(300));
+      unsubChat = onSnapshot(q, (snap) => {
+        msgsEl.innerHTML = "";
+        snap.forEach(docSnap => renderMsg(docSnap.data()));
+        scrollBottom();
+      }, (e) => {
+        console.error("onSnapshot error:", e);
+        statusEl.textContent = `Chat hata: ${e.code || ""}`;
+        alert(`Chat dinleme hatası: ${e.code || ""} ${e.message || e}`);
+      });
+    }
 
-    if (unsubChat) { unsubChat(); unsubChat = null; }
-    const q = query(collection(db, "rooms", "public", "messages"), orderBy("createdAt", "asc"), limit(300));
-    unsubChat = onSnapshot(q, (snap) => {
-      msgsEl.innerHTML = "";
-      snap.forEach(docSnap => renderMsg(docSnap.data()));
-      scrollBottom();
-    }, (e) => {
-      console.error(e);
-      statusEl.textContent = "Chat bağlantı hatası";
-    });
-  }
-
-  if (view === "settlement") {
-    saveExpenseBtn.disabled = false;
-    await loadUsersForParticipants();
-    await loadExpenses();
+    if (view === "settlement") {
+      saveExpenseBtn.disabled = false;
+      await loadUsersForParticipants();
+      await loadExpenses();
+    }
+  } catch (e) {
+    console.error("authStateChanged fatal:", e);
+    alert(`Auth state hata: ${e.code || ""} ${e.message || e}`);
   }
 });
