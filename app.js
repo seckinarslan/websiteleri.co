@@ -477,21 +477,46 @@ function getParticipantName(id) {
 }
 
 async function loadExpenses() {
-  const expensesRef = collection(db, "expenses");
-  const q = query(expensesRef, orderBy("createdAt", "desc"));
-  const snap = await getDocs(q);
-  
-  allExpenses = [];
-  snap.forEach(doc => {
-    allExpenses.push({
-      id: doc.id,
-      ...doc.data()
+  try {
+    expensesList.innerHTML = `
+      <div class="text-center" style="opacity:.7; padding: 20px;">Yükleniyor…</div>
+    `;
+
+    const expensesRef = collection(db, "expenses");
+
+    let snap;
+    try {
+      const q1 = query(expensesRef, orderBy("createdAt", "desc"));
+      snap = await getDocs(q1);
+    } catch (e) {
+      console.warn("createdAt orderBy başarısız, date ile fallback:", e);
+
+      const q2 = query(expensesRef, orderBy("date", "desc"));
+      snap = await getDocs(q2);
+    }
+
+    allExpenses = [];
+    snap.forEach(d => {
+      allExpenses.push({ id: d.id, ...d.data() });
     });
-  });
-  
-  renderExpensesList();
-  updateExpensesCount();
+
+    renderExpensesList();
+    updateExpensesCount();
+
+  } catch (e) {
+    console.error("loadExpenses hata:", e);
+    expensesList.innerHTML = `
+      <div class="text-center" style="opacity:.85; padding: 20px;">
+        Harcama geçmişi yüklenemedi ❌<br/>
+        <div style="opacity:.7; font-size:.9rem; margin-top:6px;">
+          Konsolda hata detayı var (F12 → Console).
+        </div>
+      </div>
+    `;
+    expensesCount.textContent = `0 harcama bulundu`;
+  }
 }
+
 
 function renderExpensesList() {
   expensesList.innerHTML = '';
@@ -511,44 +536,48 @@ function renderExpensesList() {
   }
   
   filteredExpenses.forEach(expense => {
-    const card = document.createElement('div');
-    card.className = 'expense-card cursor-pointer';
-    card.dataset.id = expense.id;
-    
-    const participantNames = expense.participants?.map(p => {
-      return p.type === 'manual' ? p.name : 
-             usersCache.find(u => u.uid === p.uid)?.displayName || 
-             usersCache.find(u => u.uid === p.uid)?.email || 
-             p.uid?.slice(0,6);
-    }).join(', ') || '';
-    
-    card.innerHTML = `
-      <div class="expense-header">
-        <div class="expense-title">${esc(expense.title)}</div>
-        <div class="expense-amount">${esc(expense.amount)} ${esc(expense.currency)}</div>
-      </div>
-      <div class="expense-details">
-        <div class="expense-meta">
-          <div>📅 ${esc(formatDateAny(expense.date) || formatDateAny(expense.createdAt))}</div>
-          <div>🏷️ ${esc(getCategoryLabel(expense.category))}</div>
-          <div>👤 ${esc(expense.payerName || '')} ödedi</div>
+    try {
+        const card = document.createElement('div');
+        card.className = 'expense-card cursor-pointer';
+        card.dataset.id = expense.id;
+        
+        const participantNames = expense.participants?.map(p => {
+        return p.type === 'manual' ? p.name : 
+                usersCache.find(u => u.uid === p.uid)?.displayName || 
+                usersCache.find(u => u.uid === p.uid)?.email || 
+                p.uid?.slice(0,6);
+        }).join(', ') || '';
+        
+        card.innerHTML = `
+        <div class="expense-header">
+            <div class="expense-title">${esc(expense.title)}</div>
+            <div class="expense-amount">${esc(expense.amount)} ${esc(expense.currency)}</div>
         </div>
-        ${expense.note ? `
-          <div class="expense-note">${esc(expense.note)}</div>
-        ` : ''}
-        <div class="expense-participants">
-          <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Katılımcılar:</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-            ${participantNames.split(', ').map(name => `
-              <span class="chip">${esc(name)}</span>
-            `).join('')}
-          </div>
+        <div class="expense-details">
+            <div class="expense-meta">
+            <div>📅 ${esc(formatDateAny(expense.date) || formatDateAny(expense.createdAt))}</div>
+            <div>🏷️ ${esc(getCategoryLabel(expense.category))}</div>
+            <div>👤 ${esc(expense.payerName || '')} ödedi</div>
+            </div>
+            ${expense.note ? `
+            <div class="expense-note">${esc(expense.note)}</div>
+            ` : ''}
+            <div class="expense-participants">
+            <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 4px;">Katılımcılar:</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${participantNames.split(', ').map(name => `
+                <span class="chip">${esc(name)}</span>
+                `).join('')}
+            </div>
+            </div>
         </div>
-      </div>
-    `;
-    
-    card.addEventListener('click', () => showExpenseDetail(expense.id));
-    expensesList.appendChild(card);
+        `;
+        
+        card.addEventListener('click', () => showExpenseDetail(expense.id));
+        expensesList.appendChild(card);
+    } catch (e) {
+        console.error("Expense render hatası, id:", expense?.id, e);
+    }
   });
 }
 
@@ -568,7 +597,18 @@ function updateExpensesCount() {
   expensesCount.textContent = `${allExpenses.length} harcama bulundu`;
 }
 
-refreshExpensesBtn.addEventListener('click', loadExpenses);
+refreshExpensesBtn.addEventListener('click', async () => {
+  refreshExpensesBtn.disabled = true;
+  const old = refreshExpensesBtn.textContent;
+  refreshExpensesBtn.textContent = "Yükleniyor…";
+  try {
+    await loadExpenses();
+  } finally {
+    refreshExpensesBtn.disabled = false;
+    refreshExpensesBtn.textContent = old;
+  }
+});
+
 filterCategory.addEventListener('change', renderExpensesList);
 payerSelect?.addEventListener("change", () => {
   payerId = payerSelect.value || null;

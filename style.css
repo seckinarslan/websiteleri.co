@@ -675,3 +675,14 @@ textarea {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+:root { color-scheme: dark; }
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background: #0b0f17;
+  color: #e7eefc;
+}
