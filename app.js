@@ -462,6 +462,7 @@ saveExpenseBtn.addEventListener("click", async () => {
         })
       );
       stStatus.textContent = "Harcama kaydedildi ✅";
+      playSettlementSound();
     }
 
     setTimeout(() => stStatus.textContent = "Hazır", 1500);
@@ -980,3 +981,16 @@ onAuthStateChanged(auth, async (user) => {
     alert(`Auth state hata: ${e.code || ""} ${e.message || e}`);
   }
 });
+
+function playSettlementSound() {
+  try {
+    const a = document.getElementById("settlementSound");
+    if (!a) return;
+    a.currentTime = 0;
+    a.play().catch(() => {
+      // autoplay engeline takılabilir; kullanıcı etkileşimi sonrası çalışır
+    });
+  } catch (e) {
+    console.warn("sound play failed", e);
+  }
+}
