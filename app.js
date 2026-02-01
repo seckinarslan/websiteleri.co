@@ -7,6 +7,7 @@ import {
 import {
   getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initOwnerGate } from "./owner-gate.js";
 
 /* ---------- GLOBAL ERROR CAPTURE ---------- */
 window.addEventListener("unhandledrejection", (e) => {
@@ -952,6 +953,8 @@ onAuthStateChanged(auth, async (user) => {
 
     loginBtn.style.display = "none";
     logoutBtn.style.display = "inline-block";
+
+    initOwnerGate();
 
     await upsertUser(user);
 
