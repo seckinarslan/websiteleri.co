@@ -18,12 +18,15 @@ const auth = getAuth(app);
 
 export function initOwnerGate() {
   const openMainThreadBtn = document.getElementById("openMainThread");
-  
   if (!openMainThreadBtn) return;
+
+  // Ensure deterministic click behavior (avoid multiple listeners)
+  let bound = false;
 
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       openMainThreadBtn.style.display = "none";
+      openMainThreadBtn.disabled = true;
       return;
     }
 
@@ -33,11 +36,15 @@ export function initOwnerGate() {
       openMainThreadBtn.disabled = false;
       openMainThreadBtn.style.opacity = "1";
       openMainThreadBtn.style.pointerEvents = "auto";
-      openMainThreadBtn.removeAttribute("title");
       openMainThreadBtn.title = "";
-      openMainThreadBtn.addEventListener("click", () => {
-        window.open("main-thread.html", "_blank", "noopener,noreferrer");
-      });
+
+      if (!bound) {
+        bound = true;
+        openMainThreadBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.open("main-thread.html", "_blank", "noopener,noreferrer");
+        });
+      }
     } else {
       openMainThreadBtn.disabled = true;
       openMainThreadBtn.style.opacity = "0.5";

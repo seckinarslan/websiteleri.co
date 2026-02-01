@@ -26,60 +26,9 @@
       min-height: 100vh;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px 12px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      padding: 16px;
-      background: var(--secondary-bg);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-    }
-
-    .header h1 {
-      font-size: 1.5rem;
-      margin: 0;
-    }
-
-    .user-info {
-      font-size: 0.9rem;
-      opacity: 0.8;
-    }
-
-    .content {
-      flex: 1;
-      padding: 24px;
-      background: var(--secondary-bg);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-md);
-    }
-
-    .content h2 {
-      margin-bottom: 16px;
-      font-size: 1.2rem;
-    }
-
-    .content p {
-      line-height: 1.6;
-      margin-bottom: 12px;
-      opacity: 0.9;
-    }
-
     .unauthorized {
       width: 100%;
-      height: 100vh;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -97,7 +46,8 @@
 
     .unauthorized p {
       opacity: 0.7;
-      max-width: 400px;
+      max-width: 420px;
+      line-height: 1.5;
     }
 
     button {
@@ -108,7 +58,7 @@
       cursor: pointer;
       padding: 10px 16px;
       font-size: 0.9rem;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.2s ease;
     }
 
@@ -117,9 +67,7 @@
       transform: translateY(-1px);
     }
 
-    button:active:not(:disabled) {
-      transform: translateY(0);
-    }
+    button:active:not(:disabled) { transform: translateY(0); }
 
     button:disabled {
       opacity: 0.5;
@@ -127,14 +75,12 @@
     }
 
     .logout-btn {
-      padding: 8px 12px;
-      font-size: 0.85rem;
+      padding: 10px 16px;
+      font-size: 0.9rem;
       background: var(--accent-red);
     }
 
-    .logout-btn:hover:not(:disabled) {
-      background: #ff5252;
-    }
+    .logout-btn:hover:not(:disabled) { background: #ff5252; }
 
     /* Main Thread Styles */
     .main-thread-container {
@@ -145,58 +91,52 @@
       flex-direction: column;
       justify-content: center;
       padding: 24px;
-      gap: 32px;
+      gap: 20px;
     }
 
     .focus-reminder {
       background: var(--secondary-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
-      padding: 20px;
+      padding: 18px;
       text-align: center;
       font-size: 0.95rem;
       line-height: 1.6;
       color: var(--text-color);
-      opacity: 0.9;
+      opacity: 0.95;
     }
 
     .questions-section {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 16px;
     }
 
     .question-block {
       background: var(--secondary-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
-      padding: 24px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      animation: slideIn 0.4s ease-out;
+      gap: 12px;
+      animation: slideIn 0.35s ease-out;
     }
 
     @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .question-text {
       font-size: 1rem;
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-color);
     }
 
     .question-buttons {
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-choice {
@@ -208,22 +148,20 @@
       border-radius: var(--radius-md);
       cursor: pointer;
       font-size: 0.95rem;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.2s ease;
     }
 
-    .btn-choice:hover {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
+    .btn-choice:hover { background: rgba(77,171,247,.18); border-color: rgba(77,171,247,.45); }
 
     .btn-choice.selected {
       background: var(--accent);
       border-color: var(--accent);
+      color: #fff;
     }
 
     .text-input {
-      padding: 12px 16px;
+      padding: 12px 14px;
       background: var(--input-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
@@ -232,107 +170,93 @@
       font-size: 0.95rem;
     }
 
-    .text-input::placeholder {
-      opacity: 0.6;
+    .text-input::placeholder { opacity: 0.6; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
+
+    .submit-btn:hover:not(:disabled) { background: #3a9ee1; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .task-display {
       background: var(--secondary-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
-      padding: 24px;
-      margin-top: 16px;
+      padding: 20px;
       display: none;
+      animation: slideIn 0.35s ease-out;
     }
 
-    .task-display.show {
-      display: block;
-      animation: slideIn 0.4s ease-out;
-    }
+    .task-display.show { display: block; }
 
     .task-display h3 {
-      font-size: 0.85rem;
-      opacity: 0.7;
-      margin-bottom: 12px;
+      font-size: 0.78rem;
+      opacity: 0.75;
+      margin-bottom: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
 
     .task-text {
-      font-size: 1.05rem;
-      line-height: 1.7;
+      font-size: 1.03rem;
+      line-height: 1.65;
       color: var(--text-color);
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     .timer-display {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 16px;
+      padding-top: 12px;
       border-top: 1px solid var(--border-light);
+      gap: 8px;
     }
 
     .timer {
-      font-size: 2rem;
-      font-weight: bold;
+      font-size: 1.8rem;
+      font-weight: 800;
       color: var(--accent);
-      font-family: 'Courier New', monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
     .exit-warning {
       background: rgba(255, 107, 107, 0.1);
       border: 1px solid var(--accent-red);
       border-radius: var(--radius-md);
-      padding: 16px;
+      padding: 14px;
       text-align: center;
       color: var(--accent-red);
       font-size: 0.9rem;
       display: none;
-      margin-top: 16px;
+      margin-top: 12px;
+      line-height: 1.45;
     }
 
-    .exit-warning.show {
-      display: block;
-    }
+    .exit-warning.show { display: block; }
 
-    .hidden {
-      display: none;
-    }
-
-    .submit-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: var(--radius-md);
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .submit-btn:hover:not(:disabled) {
-      background: #3a9ee1;
-      transform: translateY(-1px);
-    }
-
-    .submit-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body id="app">
-  <div class="unauthorized">
+  <div class="unauthorized" id="loading">
     <h1>⏳ Yükleniyor…</h1>
     <p>Lütfen bekleyin</p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const OWNER_UID = "4S7u8Syq1dYfJyVhCrUJNhY1QmD3";
 
@@ -352,186 +276,188 @@
 
     onAuthStateChanged(auth, (user) => {
       if (!user || user.uid !== OWNER_UID) {
+        document.title = "Main Thread — Yetkisiz";
         appEl.innerHTML = `
           <div class="unauthorized">
             <h1>❌ Yetkisiz</h1>
             <p>Bu sayfa sadece owner tarafından erişilebilir.</p>
-            <button onclick="window.close()">Kapat</button>
+            <button id="closeBtn">Kapat</button>
           </div>
         `;
+        document.getElementById("closeBtn")?.addEventListener("click", () => window.close());
         return;
       }
 
+      document.title = "Main Thread — Owner";
+
+      // Render OWNER UI
       appEl.innerHTML = `
         <div class="main-thread-container">
           <div class="focus-reminder">
-            Bu ekran seni bölmek için değil, seni bulmak için var. Boş cevap verme; cevap vermediysen şimdi yapma.
+            Bu ekran seni motive etmek için değil. Kaçışı kesmek için var.
           </div>
 
           <div class="questions-section" id="questionsSection">
-            <!-- Question 1 -->
-            <div class="question-block">
-              <div class="question-text">Bugün henüz bilgisayar başına oturdun mu?</div>
+            <!-- Q1 -->
+            <div class="question-block" id="q1">
+              <div class="question-text">Bugün bilgisayar başına oturdun mu?</div>
               <div class="question-buttons">
                 <button class="btn-choice" data-question="1" data-answer="yes">Evet</button>
                 <button class="btn-choice" data-question="1" data-answer="no">Hayır</button>
               </div>
             </div>
 
-            <!-- Question 2 -->
+            <!-- Q2 (IMPORTANT: has id="q2") -->
             <div class="question-block hidden" id="q2">
-              <div class="question-text">Son 60 dakikada planlanmamış bir uygulama veya sekme açtın mı?</div>
+              <div class="question-text">Son 60 dakikada planlanmamış uygulama/sekme açtın mı?</div>
               <div class="question-buttons">
                 <button class="btn-choice" data-question="2" data-answer="yes">Evet</button>
                 <button class="btn-choice" data-question="2" data-answer="no">Hayır</button>
               </div>
             </div>
 
-            <!-- Question 3 -->
+            <!-- Q3 -->
             <div class="question-block hidden" id="q3">
-              <div class="question-text">Şu anda hangi kod bloğunun üzerinde çalışman gerekiyor?</div>
-              <input type="text" class="text-input" id="q3Input" placeholder="Tek sözcükle yazabilir misin?" />
-              <button class="submit-btn" id="submitQ3">Devam Et</button>
+              <div class="question-text">Şu an çalışacağın tek parça ne?</div>
+              <input type="text" class="text-input" id="q3Input" placeholder="Örn: mq-ack-fix" maxlength="60" />
+              <button class="submit-btn" id="submitQ3" disabled>Devam</button>
+            </div>
+          </div>
+
+          <!-- TASK -->
+          <div class="task-display" id="taskDisplay">
+            <h3 id="taskStatus">Durum</h3>
+            <div class="task-text" id="taskText"></div>
+
+            <div class="timer-display">
+              <div>Kalan:</div>
+              <div class="timer" id="timerDisplay">00:00</div>
             </div>
 
-            <!-- Task Display -->
-            <div class="task-display" id="taskDisplay">
-              <h3 id="taskStatus">Durum</h3>
-              <div class="task-text" id="taskText"></div>
-              <div class="timer-display">
-                <div>Kalan Süre:</div>
-                <div class="timer" id="timerDisplay">10:00</div>
-              </div>
-              <div class="exit-warning" id="exitWarning">
-                Çıkmazsan, zaman kaybetmişsin olmaz. Kalabilirsin, soru cevapla.
-              </div>
-              <button class="logout-btn" style="width: 100%; margin-top: 16px;" id="exitBtn">Çıkış</button>
+            <div class="exit-warning" id="exitWarning">
+              Kaçmaya çalışıyorsun. 1 dakikayı bile satın alamıyorsun. Süre bitince çık.
             </div>
+
+            <button class="logout-btn" style="width:100%; margin-top: 14px;" id="exitBtn">Çıkış</button>
           </div>
         </div>
       `;
 
-      // Question answers
-      const answers = {
-        1: null,
-        2: null,
-        3: null
+      // Answers
+      const answers = { 1: null, 2: null, 3: "" };
+
+      // Enable submit only when q3 has text
+      const q3Input = document.getElementById("q3Input");
+      const submitQ3 = document.getElementById("submitQ3");
+
+      const syncSubmit = () => {
+        const v = (q3Input?.value || "").trim();
+        submitQ3.disabled = v.length < 2;
       };
 
-      // Handle question 1 & 2 button clicks
+      q3Input?.addEventListener("input", syncSubmit);
+
+      // Q1/Q2 clicks
       document.querySelectorAll('.btn-choice[data-question="1"], .btn-choice[data-question="2"]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const questionNum = parseInt(e.target.dataset.question);
-          const answer = e.target.dataset.answer;
-          answers[questionNum] = answer;
+        btn.addEventListener("click", (e) => {
+          const q = Number(e.currentTarget.dataset.question);
+          const a = e.currentTarget.dataset.answer;
+          answers[q] = a;
 
-          // Clear previous selection and mark this as selected
-          e.target.parentElement.querySelectorAll('.btn-choice').forEach(b => {
-            b.classList.remove('selected');
-          });
-          e.target.classList.add('selected');
+          // selection UI
+          e.currentTarget.parentElement.querySelectorAll(".btn-choice").forEach(x => x.classList.remove("selected"));
+          e.currentTarget.classList.add("selected");
 
-          // Show next question
-          if (questionNum === 1 && answers[1] !== null) {
-            setTimeout(() => {
-              document.getElementById('q2').classList.remove('hidden');
-            }, 300);
+          if (q === 1) {
+            document.getElementById("q2")?.classList.remove("hidden");
           }
-
-          if (questionNum === 2 && answers[2] !== null) {
-            setTimeout(() => {
-              document.getElementById('q3').classList.remove('hidden');
-              document.getElementById('q3Input').focus();
-            }, 300);
+          if (q === 2) {
+            document.getElementById("q3")?.classList.remove("hidden");
+            q3Input?.focus();
+            syncSubmit();
           }
         });
       });
 
-      // Handle question 3 submit
-      document.getElementById('submitQ3').addEventListener('click', () => {
-        const q3Answer = document.getElementById('q3Input').value.trim();
-        if (q3Answer) {
-          answers[3] = q3Answer;
-          determineStatus();
-        }
+      // Q3 submit
+      const submit = () => {
+        const v = (q3Input?.value || "").trim();
+        if (v.length < 2) return;
+        answers[3] = v;
+        determineStatus();
+      };
+
+      submitQ3?.addEventListener("click", submit);
+      q3Input?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submit();
       });
 
-      document.getElementById('q3Input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          const q3Answer = document.getElementById('q3Input').value.trim();
-          if (q3Answer) {
-            answers[3] = q3Answer;
-            determineStatus();
-          }
-        }
-      });
-
-      // Determine status and show task
       function determineStatus() {
-        let status, duration, task;
+        let status = "NORMAL";
+        let durationMin = 10;
+        let task = "";
 
-        if (answers[1] === 'no' || answers[3] === null || answers[3] === '') {
-          status = 'CRISIS';
-          duration = 10;
-          task = 'Şimdi 10 dakika boyunca proje listeni aç ve bu hafta için 3 öncelik yazı. Başka hiçbir şey yapma. Süre bitince ekran kapanır.';
-        } else if (answers[1] === 'yes' && answers[2] === 'yes' && answers[3]) {
-          status = 'LOW';
-          duration = 15;
-          task = 'Şimdi 15 dakika boyunca "' + answers[3] + '" için kaynak araştırması yap. Bir sekme dışında her şey kapalı. Süre bitince ekran kapanır.';
-        } else if (answers[1] === 'yes' && answers[2] === 'no' && answers[3]) {
-          status = 'NORMAL';
-          duration = 10;
-          task = 'Şimdi 10 dakika boyunca yalnızca "' + answers[3] + '" üzerinde çalış. İzleme modunda çalış: tarayıcı, Slack, email kapalı. Süre bitince ekran kapanır.';
+        // deterministic rules
+        if (answers[1] === "no") {
+          status = "CRISIS";
+          durationMin = 10;
+          task = `Şimdi 10 dakika: projeyi aç, ${answers[3]} için tek bir dosyayı aç ve 1 satır not yaz. Kod yok. Sadece not.`;
+        } else if (answers[2] === "yes") {
+          status = "LOW";
+          durationMin = 15;
+          task = `Şimdi 15 dakika: "${answers[3]}" için sadece 1 dosyada ilerle. Tarayıcı/Slack/email kapalı. Bitince commit yok; sadece küçük ilerleme.`;
+        } else {
+          status = "NORMAL";
+          durationMin = 10;
+          task = `Şimdi 10 dakika: "${answers[3]}" üzerinde tek hamle. Log aç, breakpoint koy, 1 hipotez yaz.`;
         }
 
-        // Display task
-        document.getElementById('questionsSection').classList.add('hidden');
-        document.getElementById('taskDisplay').classList.add('show');
-        document.getElementById('taskStatus').textContent = status + ' Durumu';
-        document.getElementById('taskText').textContent = task;
+        // show task
+        document.getElementById("questionsSection")?.classList.add("hidden");
+        document.getElementById("taskDisplay")?.classList.add("show");
+        document.getElementById("taskStatus").textContent = status;
+        document.getElementById("taskText").textContent = task;
 
-        // Start timer
-        startTimer(duration * 60);
+        startTimer(durationMin * 60);
       }
 
-      // Timer function
-      function startTimer(seconds) {
-        let remaining = seconds;
-        const timerDisplay = document.getElementById('timerDisplay');
-        const exitWarning = document.getElementById('exitWarning');
+      function startTimer(totalSeconds) {
+        let remaining = totalSeconds;
 
-        const updateDisplay = () => {
+        const timerDisplay = document.getElementById("timerDisplay");
+        const exitWarning = document.getElementById("exitWarning");
+        const exitBtn = document.getElementById("exitBtn");
+
+        const render = () => {
           const mins = Math.floor(remaining / 60);
           const secs = remaining % 60;
-          timerDisplay.textContent = \`\${mins}:\${secs < 10 ? '0' : ''}\${secs}\`;
-
-          if (remaining <= 0) {
-            timerDisplay.textContent = '00:00';
-            document.getElementById('exitBtn').textContent = 'Tamam, Kapat';
-            document.getElementById('exitBtn').classList.remove('logout-btn');
-            document.getElementById('exitBtn').style.background = 'var(--accent)';
-            exitWarning.classList.remove('show');
-            return;
-          }
-          remaining--;
-          setTimeout(updateDisplay, 1000);
+          timerDisplay.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
         };
 
-        updateDisplay();
-      }
+        render();
 
-      // Exit button
-      document.getElementById('exitBtn').addEventListener('click', () => {
-        const timerText = document.getElementById('timerDisplay').textContent;
-        if (timerText === '00:00') {
-          window.location.href = 'owner-gate.html';
-        } else {
-          document.getElementById('exitWarning').classList.add('show');
-          setTimeout(() => {
-            document.getElementById('exitWarning').classList.remove('show');
-          }, 5000);
-        }
-      });
+        const iv = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) {
+            clearInterval(iv);
+            timerDisplay.textContent = "00:00";
+            exitBtn.textContent = "Tamam, Kapat";
+            exitWarning.classList.remove("show");
+            return;
+          }
+          render();
+        }, 1000);
+
+        // Exit behavior
+        exitBtn.addEventListener("click", () => {
+          if (remaining <= 0) {
+            window.location.href = "owner-gate.html";
+          } else {
+            exitWarning.classList.add("show");
+            setTimeout(() => exitWarning.classList.remove("show"), 3000);
+          }
+        }, { once: true });
+      }
     });
   </script>
 </body>
