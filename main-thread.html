@@ -135,6 +135,193 @@
     .logout-btn:hover:not(:disabled) {
       background: #ff5252;
     }
+
+    /* Main Thread Styles */
+    .main-thread-container {
+      max-width: 600px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px;
+      gap: 32px;
+    }
+
+    .focus-reminder {
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      text-align: center;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-color);
+      opacity: 0.9;
+    }
+
+    .questions-section {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .question-block {
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .question-text {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--text-color);
+    }
+
+    .question-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-choice {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      background: var(--input-bg);
+      color: var(--text-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .btn-choice:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-choice.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .text-input {
+      padding: 12px 16px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: var(--text-color);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.95rem;
+    }
+
+    .text-input::placeholder {
+      opacity: 0.6;
+    }
+
+    .task-display {
+      background: var(--secondary-bg);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .task-display.show {
+      display: block;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .task-display h3 {
+      font-size: 0.85rem;
+      opacity: 0.7;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .task-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-color);
+      margin-bottom: 20px;
+    }
+
+    .timer-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .timer {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent);
+      font-family: 'Courier New', monospace;
+    }
+
+    .exit-warning {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid var(--accent-red);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: center;
+      color: var(--accent-red);
+      font-size: 0.9rem;
+      display: none;
+      margin-top: 16px;
+    }
+
+    .exit-warning.show {
+      display: block;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: #3a9ee1;
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body id="app">
@@ -176,31 +363,174 @@
       }
 
       appEl.innerHTML = `
-        <div class="container">
-          <div class="header">
-            <h1>📌 Main Thread (Owner)</h1>
-            <div style="display: flex; gap: 12px; align-items: center;">
-              <div class="user-info">
-                <strong>${user.displayName || user.email || "Owner"}</strong>
-              </div>
-              <button class="logout-btn" id="logoutBtn">Çıkış</button>
-            </div>
+        <div class="main-thread-container">
+          <div class="focus-reminder">
+            Bu ekran seni bölmek için değil, seni bulmak için var. Boş cevap verme; cevap vermediysen şimdi yapma.
           </div>
 
-          <div class="content">
-            <h2>Hoş geldin, Owner! 👋</h2>
-            <p>Bu alan sadece owner tarafından erişilebilir ve yönetilmeye ayrılmıştır.</p>
-            <p>Burada özel araçlar, ayarlar ve yönetim paneli yer alacak.</p>
-            <p style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-              <strong>Mevcut Kullanıcı:</strong> ${user.email}
-            </p>
+          <div class="questions-section" id="questionsSection">
+            <!-- Question 1 -->
+            <div class="question-block">
+              <div class="question-text">Bugün henüz bilgisayar başına oturdun mu?</div>
+              <div class="question-buttons">
+                <button class="btn-choice" data-question="1" data-answer="yes">Evet</button>
+                <button class="btn-choice" data-question="1" data-answer="no">Hayır</button>
+              </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="question-block hidden" id="q2">
+              <div class="question-text">Son 60 dakikada planlanmamış bir uygulama veya sekme açtın mı?</div>
+              <div class="question-buttons">
+                <button class="btn-choice" data-question="2" data-answer="yes">Evet</button>
+                <button class="btn-choice" data-question="2" data-answer="no">Hayır</button>
+              </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="question-block hidden" id="q3">
+              <div class="question-text">Şu anda hangi kod bloğunun üzerinde çalışman gerekiyor?</div>
+              <input type="text" class="text-input" id="q3Input" placeholder="Tek sözcükle yazabilir misin?" />
+              <button class="submit-btn" id="submitQ3">Devam Et</button>
+            </div>
+
+            <!-- Task Display -->
+            <div class="task-display" id="taskDisplay">
+              <h3 id="taskStatus">Durum</h3>
+              <div class="task-text" id="taskText"></div>
+              <div class="timer-display">
+                <div>Kalan Süre:</div>
+                <div class="timer" id="timerDisplay">10:00</div>
+              </div>
+              <div class="exit-warning" id="exitWarning">
+                Çıkmazsan, zaman kaybetmişsin olmaz. Kalabilirsin, soru cevapla.
+              </div>
+              <button class="logout-btn" style="width: 100%; margin-top: 16px;" id="exitBtn">Çıkış</button>
+            </div>
           </div>
         </div>
       `;
 
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await signOut(auth);
-        window.close();
+      // Question answers
+      const answers = {
+        1: null,
+        2: null,
+        3: null
+      };
+
+      // Handle question 1 & 2 button clicks
+      document.querySelectorAll('.btn-choice[data-question="1"], .btn-choice[data-question="2"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const questionNum = parseInt(e.target.dataset.question);
+          const answer = e.target.dataset.answer;
+          answers[questionNum] = answer;
+
+          // Clear previous selection and mark this as selected
+          e.target.parentElement.querySelectorAll('.btn-choice').forEach(b => {
+            b.classList.remove('selected');
+          });
+          e.target.classList.add('selected');
+
+          // Show next question
+          if (questionNum === 1 && answers[1] !== null) {
+            setTimeout(() => {
+              document.getElementById('q2').classList.remove('hidden');
+            }, 300);
+          }
+
+          if (questionNum === 2 && answers[2] !== null) {
+            setTimeout(() => {
+              document.getElementById('q3').classList.remove('hidden');
+              document.getElementById('q3Input').focus();
+            }, 300);
+          }
+        });
+      });
+
+      // Handle question 3 submit
+      document.getElementById('submitQ3').addEventListener('click', () => {
+        const q3Answer = document.getElementById('q3Input').value.trim();
+        if (q3Answer) {
+          answers[3] = q3Answer;
+          determineStatus();
+        }
+      });
+
+      document.getElementById('q3Input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const q3Answer = document.getElementById('q3Input').value.trim();
+          if (q3Answer) {
+            answers[3] = q3Answer;
+            determineStatus();
+          }
+        }
+      });
+
+      // Determine status and show task
+      function determineStatus() {
+        let status, duration, task;
+
+        if (answers[1] === 'no' || answers[3] === null || answers[3] === '') {
+          status = 'CRISIS';
+          duration = 10;
+          task = 'Şimdi 10 dakika boyunca proje listeni aç ve bu hafta için 3 öncelik yazı. Başka hiçbir şey yapma. Süre bitince ekran kapanır.';
+        } else if (answers[1] === 'yes' && answers[2] === 'yes' && answers[3]) {
+          status = 'LOW';
+          duration = 15;
+          task = 'Şimdi 15 dakika boyunca "' + answers[3] + '" için kaynak araştırması yap. Bir sekme dışında her şey kapalı. Süre bitince ekran kapanır.';
+        } else if (answers[1] === 'yes' && answers[2] === 'no' && answers[3]) {
+          status = 'NORMAL';
+          duration = 10;
+          task = 'Şimdi 10 dakika boyunca yalnızca "' + answers[3] + '" üzerinde çalış. İzleme modunda çalış: tarayıcı, Slack, email kapalı. Süre bitince ekran kapanır.';
+        }
+
+        // Display task
+        document.getElementById('questionsSection').classList.add('hidden');
+        document.getElementById('taskDisplay').classList.add('show');
+        document.getElementById('taskStatus').textContent = status + ' Durumu';
+        document.getElementById('taskText').textContent = task;
+
+        // Start timer
+        startTimer(duration * 60);
+      }
+
+      // Timer function
+      function startTimer(seconds) {
+        let remaining = seconds;
+        const timerDisplay = document.getElementById('timerDisplay');
+        const exitWarning = document.getElementById('exitWarning');
+
+        const updateDisplay = () => {
+          const mins = Math.floor(remaining / 60);
+          const secs = remaining % 60;
+          timerDisplay.textContent = \`\${mins}:\${secs < 10 ? '0' : ''}\${secs}\`;
+
+          if (remaining <= 0) {
+            timerDisplay.textContent = '00:00';
+            document.getElementById('exitBtn').textContent = 'Tamam, Kapat';
+            document.getElementById('exitBtn').classList.remove('logout-btn');
+            document.getElementById('exitBtn').style.background = 'var(--accent)';
+            exitWarning.classList.remove('show');
+            return;
+          }
+          remaining--;
+          setTimeout(updateDisplay, 1000);
+        };
+
+        updateDisplay();
+      }
+
+      // Exit button
+      document.getElementById('exitBtn').addEventListener('click', () => {
+        const timerText = document.getElementById('timerDisplay').textContent;
+        if (timerText === '00:00') {
+          window.location.href = 'owner-gate.html';
+        } else {
+          document.getElementById('exitWarning').classList.add('show');
+          setTimeout(() => {
+            document.getElementById('exitWarning').classList.remove('show');
+          }, 5000);
+        }
       });
     });
   </script>
