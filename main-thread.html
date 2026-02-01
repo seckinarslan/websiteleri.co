@@ -14,16 +14,52 @@
       --input-bg: rgba(255, 255, 255, .06);
       --accent: #4dabf7;
       --accent-red: #ff6b6b;
+      --accent-green: #40c057;
       --radius-md: 12px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
       background: var(--primary-bg);
       color: var(--text-color);
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Fullscreen overlay - prevents escape */
+    .fullscreen-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--primary-bg);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .fullscreen-overlay.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* Blur background when task is active */
+    .blur-background {
+      filter: blur(8px);
+      pointer-events: none;
+      transition: filter 0.3s ease;
     }
 
     .unauthorized {
@@ -56,10 +92,11 @@
       background: var(--accent);
       color: white;
       cursor: pointer;
-      padding: 10px 16px;
-      font-size: 0.9rem;
+      padding: 12px 18px;
+      font-size: 0.95rem;
       font-weight: 600;
       transition: all 0.2s ease;
+      user-select: none;
     }
 
     button:hover:not(:disabled) {
@@ -67,7 +104,9 @@
       transform: translateY(-1px);
     }
 
-    button:active:not(:disabled) { transform: translateY(0); }
+    button:active:not(:disabled) { 
+      transform: translateY(0); 
+    }
 
     button:disabled {
       opacity: 0.5;
@@ -75,23 +114,27 @@
     }
 
     .logout-btn {
-      padding: 10px 16px;
-      font-size: 0.9rem;
+      padding: 12px 18px;
+      font-size: 0.95rem;
       background: var(--accent-red);
+      border: none;
     }
 
-    .logout-btn:hover:not(:disabled) { background: #ff5252; }
+    .logout-btn:hover:not(:disabled) { 
+      background: #ff5252; 
+    }
 
-    /* Main Thread Styles */
+    /* Main Container */
     .main-thread-container {
-      max-width: 600px;
+      max-width: 500px;
       margin: 0 auto;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 24px;
-      gap: 20px;
+      padding: 20px;
+      gap: 16px;
+      transition: filter 0.3s ease;
     }
 
     .focus-reminder {
@@ -104,12 +147,43 @@
       line-height: 1.6;
       color: var(--text-color);
       opacity: 0.95;
+      margin-bottom: 8px;
     }
 
+    .focus-reminder strong {
+      color: var(--accent);
+    }
+
+    /* Progress Indicator */
+    .progress-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border-light);
+      transition: background 0.3s ease;
+    }
+
+    .progress-dot.active {
+      background: var(--accent);
+      transform: scale(1.2);
+    }
+
+    .progress-dot.completed {
+      background: var(--accent-green);
+    }
+
+    /* Questions */
     .questions-section {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .question-block {
@@ -119,7 +193,7 @@
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
       animation: slideIn 0.35s ease-out;
     }
 
@@ -128,10 +202,23 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
     .question-text {
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 600;
       color: var(--text-color);
+      line-height: 1.5;
+    }
+
+    .question-hint {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      font-style: italic;
+      margin-top: -8px;
     }
 
     .question-buttons {
@@ -141,7 +228,7 @@
 
     .btn-choice {
       flex: 1;
-      padding: 12px 16px;
+      padding: 14px 16px;
       border: 1px solid var(--border-light);
       background: var(--input-bg);
       color: var(--text-color);
@@ -150,113 +237,250 @@
       font-size: 0.95rem;
       font-weight: 600;
       transition: all 0.2s ease;
+      text-align: center;
     }
 
-    .btn-choice:hover { background: rgba(77,171,247,.18); border-color: rgba(77,171,247,.45); }
+    .btn-choice:hover { 
+      background: rgba(77,171,247,.18); 
+      border-color: rgba(77,171,247,.45); 
+    }
 
     .btn-choice.selected {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
+      box-shadow: 0 2px 8px rgba(77, 171, 247, 0.3);
     }
 
     .text-input {
-      padding: 12px 14px;
+      padding: 14px 16px;
       background: var(--input-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
       color: var(--text-color);
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: inherit;
       font-size: 0.95rem;
+      transition: border-color 0.2s ease;
     }
 
-    .text-input::placeholder { opacity: 0.6; }
+    .text-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .text-input::placeholder { 
+      opacity: 0.6; 
+    }
 
     .submit-btn {
       width: 100%;
-      padding: 13px 14px;
+      padding: 15px;
       background: var(--accent);
       color: white;
       border: none;
       border-radius: var(--radius-md);
-      font-size: 0.95rem;
+      font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s ease;
+      margin-top: 8px;
     }
 
-    .submit-btn:hover:not(:disabled) { background: #3a9ee1; transform: translateY(-1px); }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .submit-btn:hover:not(:disabled) { 
+      background: #3a9ee1; 
+      transform: translateY(-1px); 
+    }
+    .submit-btn:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed; 
+    }
 
+    /* Task Display */
     .task-display {
       background: var(--secondary-bg);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-md);
-      padding: 20px;
+      padding: 24px;
       display: none;
       animation: slideIn 0.35s ease-out;
     }
 
-    .task-display.show { display: block; }
+    .task-display.show { 
+      display: block; 
+    }
 
-    .task-display h3 {
-      font-size: 0.78rem;
-      opacity: 0.75;
-      margin-bottom: 10px;
+    .task-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+    }
+
+    .status-crisis {
+      background: rgba(255, 107, 107, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .status-low {
+      background: rgba(255, 193, 7, 0.15);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .status-normal {
+      background: rgba(64, 192, 87, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(64, 192, 87, 0.3);
     }
 
     .task-text {
-      font-size: 1.03rem;
-      line-height: 1.65;
+      font-size: 1.1rem;
+      line-height: 1.7;
       color: var(--text-color);
-      margin-bottom: 14px;
+      margin-bottom: 24px;
+      white-space: pre-line;
+    }
+
+    .timer-container {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 20px;
     }
 
     .timer-display {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 12px;
+      padding-top: 16px;
       border-top: 1px solid var(--border-light);
       gap: 8px;
     }
 
     .timer {
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: 800;
       color: var(--accent);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      letter-spacing: 2px;
+    }
+
+    .timer.warning {
+      color: #ffc107;
+      animation: pulse 1.5s infinite;
+    }
+
+    .timer.critical {
+      color: var(--accent-red);
+      animation: pulse 0.8s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
 
     .exit-warning {
       background: rgba(255, 107, 107, 0.1);
       border: 1px solid var(--accent-red);
       border-radius: var(--radius-md);
-      padding: 14px;
+      padding: 16px;
       text-align: center;
       color: var(--accent-red);
       font-size: 0.9rem;
       display: none;
-      margin-top: 12px;
-      line-height: 1.45;
+      margin-top: 16px;
+      line-height: 1.5;
     }
 
-    .exit-warning.show { display: block; }
+    .exit-warning.show { 
+      display: block; 
+      animation: shake 0.5s ease;
+    }
 
-    .hidden { display: none; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    .hidden { 
+      display: none !important; 
+    }
+
+    /* Focus mode - removes all distractions */
+    .focus-mode .main-thread-container {
+      max-width: 100%;
+      padding: 0;
+    }
+
+    .focus-mode .task-display {
+      border: none;
+      border-radius: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .focus-mode .task-text {
+      font-size: 1.3rem;
+      text-align: center;
+      margin: 40px 20px;
+    }
+
+    .focus-mode .timer {
+      font-size: 3rem;
+    }
+
+    /* Micro-interactions */
+    .micro-commit {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent-green);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(64, 192, 87, 0.3);
+      display: none;
+      z-index: 100;
+    }
+
+    .micro-commit.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .micro-commit:hover {
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body id="app">
-  <div class="unauthorized" id="loading">
-    <h1>⏳ Yükleniyor…</h1>
-    <p>Lütfen bekleyin</p>
+  <div class="fullscreen-overlay" id="blockOverlay">
+    <h1 style="font-size: 2.5rem; margin-bottom: 20px;">🚫</h1>
+    <p style="font-size: 1.2rem; margin-bottom: 16px;">Süre bitmeden çıkamazsın</p>
+    <p style="opacity: 0.8; max-width: 300px;">
+      Bu bir teknik kısıtlama değil, seninle yapılan anlaşma.
+    </p>
   </div>
+
+  <button class="micro-commit" id="microCommitBtn">✓</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
     const OWNER_UID = "4S7u8Syq1dYfJyVhCrUJNhY1QmD3";
 
@@ -274,6 +498,22 @@
     const auth = getAuth(app);
     const appEl = document.getElementById("app");
 
+    // Block escape attempts
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && timerRunning) {
+        document.title = "🚨 GERİ DÖN";
+        showBlockOverlay();
+      }
+    });
+
+    function showBlockOverlay() {
+      document.getElementById('blockOverlay').classList.add('active');
+      setTimeout(() => {
+        document.getElementById('blockOverlay').classList.remove('active');
+        document.title = "Main Thread — Owner";
+      }, 2000);
+    }
+
     onAuthStateChanged(auth, (user) => {
       if (!user || user.uid !== OWNER_UID) {
         document.title = "Main Thread — Yetkisiz";
@@ -288,28 +528,40 @@
         return;
       }
 
+      renderOwnerUI();
+    });
+
+    function renderOwnerUI() {
       document.title = "Main Thread — Owner";
 
-      // Render OWNER UI
       appEl.innerHTML = `
         <div class="main-thread-container">
           <div class="focus-reminder">
-            Bu ekran seni motive etmek için değil. Kaçışı kesmek için var.
+            <strong>Tek düşünce akışı:</strong> Bu ekran sadece şu an için var. 
+            Başka hiçbir şey yok.
+          </div>
+
+          <div class="progress-indicator">
+            <div class="progress-dot active" id="progress1"></div>
+            <div class="progress-dot" id="progress2"></div>
+            <div class="progress-dot" id="progress3"></div>
           </div>
 
           <div class="questions-section" id="questionsSection">
             <!-- Q1 -->
             <div class="question-block" id="q1">
               <div class="question-text">Bugün bilgisayar başına oturdun mu?</div>
+              <div class="question-hint">Cevabınla oynama. Sadece gerçek.</div>
               <div class="question-buttons">
                 <button class="btn-choice" data-question="1" data-answer="yes">Evet</button>
                 <button class="btn-choice" data-question="1" data-answer="no">Hayır</button>
               </div>
             </div>
 
-            <!-- Q2 (IMPORTANT: has id="q2") -->
+            <!-- Q2 -->
             <div class="question-block hidden" id="q2">
               <div class="question-text">Son 60 dakikada planlanmamış uygulama/sekme açtın mı?</div>
+              <div class="question-hint">WhatsApp, YouTube, Twitter, haberler...</div>
               <div class="question-buttons">
                 <button class="btn-choice" data-question="2" data-answer="yes">Evet</button>
                 <button class="btn-choice" data-question="2" data-answer="no">Hayır</button>
@@ -319,32 +571,47 @@
             <!-- Q3 -->
             <div class="question-block hidden" id="q3">
               <div class="question-text">Şu an çalışacağın tek parça ne?</div>
-              <input type="text" class="text-input" id="q3Input" placeholder="Örn: mq-ack-fix" maxlength="60" />
-              <button class="submit-btn" id="submitQ3" disabled>Devam</button>
+              <div class="question-hint">Maks 60 karakter. Örn: "mq-ack-fix", "auth bug #42"</div>
+              <input type="text" class="text-input" id="q3Input" placeholder="Sadece tek bir şey..." maxlength="60" />
+              <button class="submit-btn" id="submitQ3" disabled>Başla</button>
             </div>
           </div>
 
           <!-- TASK -->
           <div class="task-display" id="taskDisplay">
-            <h3 id="taskStatus">Durum</h3>
+            <div class="task-status" id="taskStatus">Durum</div>
             <div class="task-text" id="taskText"></div>
 
-            <div class="timer-display">
-              <div>Kalan:</div>
-              <div class="timer" id="timerDisplay">00:00</div>
+            <div class="timer-container">
+              <div style="opacity:0.8; margin-bottom:8px;">Kalan:</div>
+              <div class="timer" id="timerDisplay">10:00</div>
             </div>
 
             <div class="exit-warning" id="exitWarning">
-              Kaçmaya çalışıyorsun. 1 dakikayı bile satın alamıyorsun. Süre bitince çık.
+              ⚠️ Kaçmaya çalışıyorsun. 1 dakikayı bile satın alamıyorsun. Süre bitince çık.
             </div>
 
-            <button class="logout-btn" style="width:100%; margin-top: 14px;" id="exitBtn">Çıkış</button>
+            <div class="timer-display">
+              <button class="logout-btn" id="exitBtn">Çıkış</button>
+              <button class="submit-btn" id="focusBtn" style="flex:2;">Tam Ekran Odak Modu</button>
+            </div>
           </div>
         </div>
       `;
 
-      // Answers
+      initializeAppLogic();
+    }
+
+    function initializeAppLogic() {
       const answers = { 1: null, 2: null, 3: "" };
+      let timerRunning = false;
+      let timerInterval = null;
+      let remainingSeconds = 0;
+
+      // Progress indicators
+      const progress1 = document.getElementById('progress1');
+      const progress2 = document.getElementById('progress2');
+      const progress3 = document.getElementById('progress3');
 
       // Enable submit only when q3 has text
       const q3Input = document.getElementById("q3Input");
@@ -363,6 +630,17 @@
           const q = Number(e.currentTarget.dataset.question);
           const a = e.currentTarget.dataset.answer;
           answers[q] = a;
+
+          // Update progress
+          if (q === 1) {
+            progress1.classList.remove('active');
+            progress1.classList.add('completed');
+            progress2.classList.add('active');
+          } else if (q === 2) {
+            progress2.classList.remove('active');
+            progress2.classList.add('completed');
+            progress3.classList.add('active');
+          }
 
           // selection UI
           e.currentTarget.parentElement.querySelectorAll(".btn-choice").forEach(x => x.classList.remove("selected"));
@@ -384,6 +662,8 @@
         const v = (q3Input?.value || "").trim();
         if (v.length < 2) return;
         answers[3] = v;
+        progress3.classList.remove('active');
+        progress3.classList.add('completed');
         determineStatus();
       };
 
@@ -401,64 +681,123 @@
         if (answers[1] === "no") {
           status = "CRISIS";
           durationMin = 10;
-          task = `Şimdi 10 dakika: projeyi aç, ${answers[3]} için tek bir dosyayı aç ve 1 satır not yaz. Kod yok. Sadece not.`;
+          task = `Şimdi 10 dakika: projeyi aç, "${answers[3]}" için tek bir dosyayı aç ve 1 satır not yaz.\n\nKod yok. Sadece not.\n\nNot: "Bu dosyada şunu yapacağım: [1 cümle]"`;
         } else if (answers[2] === "yes") {
           status = "LOW";
           durationMin = 15;
-          task = `Şimdi 15 dakika: "${answers[3]}" için sadece 1 dosyada ilerle. Tarayıcı/Slack/email kapalı. Bitince commit yok; sadece küçük ilerleme.`;
+          task = `Şimdi 15 dakika: "${answers[3]}" için sadece 1 dosyada ilerle.\n\nTarayıcı/Slack/email KAPALI.\n\nBitince commit yok; sadece küçük ilerleme.\n\n"Tamamlandı" demek için 1 cümle yaz.`;
         } else {
           status = "NORMAL";
-          durationMin = 10;
-          task = `Şimdi 10 dakika: "${answers[3]}" üzerinde tek hamle. Log aç, breakpoint koy, 1 hipotez yaz.`;
+          durationMin = 25;
+          task = `Şimdi 25 dakika: "${answers[3]}" üzerinde tek hamle.\n\nLog aç, breakpoint koy, 1 hipotez yaz.\n\nİlerleme = 1 commit.`;
         }
 
         // show task
         document.getElementById("questionsSection")?.classList.add("hidden");
         document.getElementById("taskDisplay")?.classList.add("show");
         document.getElementById("taskStatus").textContent = status;
+        document.getElementById("taskStatus").className = `task-status status-${status.toLowerCase()}`;
         document.getElementById("taskText").textContent = task;
 
         startTimer(durationMin * 60);
       }
 
       function startTimer(totalSeconds) {
-        let remaining = totalSeconds;
+        remainingSeconds = totalSeconds;
+        timerRunning = true;
 
         const timerDisplay = document.getElementById("timerDisplay");
         const exitWarning = document.getElementById("exitWarning");
         const exitBtn = document.getElementById("exitBtn");
+        const focusBtn = document.getElementById("focusBtn");
+        const microCommitBtn = document.getElementById("microCommitBtn");
+
+        // Update timer appearance
+        const updateTimerStyle = () => {
+          if (remainingSeconds <= 60) {
+            timerDisplay.className = "timer critical";
+          } else if (remainingSeconds <= 300) {
+            timerDisplay.className = "timer warning";
+          } else {
+            timerDisplay.className = "timer";
+          }
+        };
 
         const render = () => {
-          const mins = Math.floor(remaining / 60);
-          const secs = remaining % 60;
+          const mins = Math.floor(remainingSeconds / 60);
+          const secs = remainingSeconds % 60;
           timerDisplay.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+          updateTimerStyle();
         };
 
         render();
 
-        const iv = setInterval(() => {
-          remaining--;
-          if (remaining <= 0) {
-            clearInterval(iv);
+        // Start micro-commit button after 1 minute
+        setTimeout(() => {
+          microCommitBtn.classList.add('show');
+          microCommitBtn.addEventListener('click', () => {
+            microCommitBtn.innerHTML = '✓<div style="font-size:10px; margin-top:2px;">Kaydedildi</div>';
+            microCommitBtn.style.background = '#40c057';
+            setTimeout(() => {
+              microCommitBtn.innerHTML = '✓';
+              microCommitBtn.style.background = '';
+            }, 1500);
+          });
+        }, 60000);
+
+        timerInterval = setInterval(() => {
+          remainingSeconds--;
+          if (remainingSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerRunning = false;
             timerDisplay.textContent = "00:00";
-            exitBtn.textContent = "Tamam, Kapat";
+            exitBtn.textContent = "Tamamlandı 🎉";
+            exitBtn.style.background = "var(--accent-green)";
             exitWarning.classList.remove("show");
+            microCommitBtn.classList.remove('show');
+            
+            // Enable exit
+            exitBtn.onclick = () => {
+              signOut(auth).then(() => {
+                window.location.href = "owner-gate.html";
+              });
+            };
             return;
           }
           render();
         }, 1000);
 
         // Exit behavior
-        exitBtn.addEventListener("click", () => {
-          if (remaining <= 0) {
-            window.location.href = "owner-gate.html";
-          } else {
-            exitWarning.classList.add("show");
-            setTimeout(() => exitWarning.classList.remove("show"), 3000);
+        exitBtn.onclick = () => {
+          if (remainingSeconds <= 0) return;
+          exitWarning.classList.add("show");
+          showBlockOverlay();
+          setTimeout(() => exitWarning.classList.remove("show"), 3000);
+        };
+
+        // Focus mode
+        focusBtn.onclick = () => {
+          document.body.classList.add('focus-mode');
+          document.body.classList.add('blur-background');
+          focusBtn.textContent = "Normal Moda Dön";
+          focusBtn.onclick = () => {
+            document.body.classList.remove('focus-mode');
+            document.body.classList.remove('blur-background');
+            focusBtn.textContent = "Tam Ekran Odak Modu";
+            focusBtn.onclick = () => document.body.classList.add('focus-mode');
+          };
+        };
+
+        // Prevent accidental navigation
+        window.addEventListener('beforeunload', (e) => {
+          if (timerRunning && remainingSeconds > 0) {
+            e.preventDefault();
+            e.returnValue = 'Timer is still running. Are you sure?';
+            return e.returnValue;
           }
-        }, { once: true });
+        });
       }
-    });
+    }
   </script>
 </body>
 </html>
