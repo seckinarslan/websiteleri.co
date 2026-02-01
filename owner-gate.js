@@ -1,7 +1,7 @@
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
-const OWNER_UID = "4S7u8Syq1dYfJyVhCrUJNhY1QmD3";
+const OWNER_UID = "###4S7u8Syq1dYfJyVhCrUJNhY1QmD3";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDN0zwDiK0MveXRkykgkhG-p-oqBvanF7U",
