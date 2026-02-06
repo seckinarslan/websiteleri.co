@@ -237,9 +237,11 @@ const closeModalBtns = document.querySelectorAll("#closeModal, #closeModal2");
 const editExpenseBtn = document.getElementById("editExpense");
 const deleteExpenseBtn = document.getElementById("deleteExpense");
 const expenseDetailContent = document.getElementById("expenseDetailContent");
+const stEntryType = document.getElementById("stEntryType");
+
 
 // default date
-stDate.value = new Date().toISOString().split("T")[0];
+if (stDate) stDate.value = new Date().toISOString().split("T")[0];
 
 let usersCache = [];
 let manualParticipants = [];
@@ -269,7 +271,6 @@ function renderParticipantsList() {
 
   manualParticipants.forEach((name, index) => addManualParticipantItem(name, index));
 
-  updateSelectedCount();
   renderPayerOptions();
   updateSelectedCount();
 }
@@ -294,20 +295,36 @@ function addParticipantItem(user) {
   `;
 
   item.addEventListener("click", (e) => {
-    if (e.target.closest(".participant-item") === item) {
-      if (e.ctrlKey || e.metaKey) {
-        payerId = user.uid;
-      } else {
-        if (selectedParticipants.has(user.uid)) {
-          selectedParticipants.delete(user.uid);
-          if (payerId === user.uid) payerId = null;
-        } else {
-          selectedParticipants.add(user.uid);
-        }
-      }
+    if (e.target.closest(".participant-item") !== item) return;
+
+    const entryType = stEntryType?.value || "EXPENSE";
+
+    // CTRL/Meta ile payer set etme davranışını KALDIR (özellikle mobilde zaten yok)
+    // payer her zaman dropdown'dan seçilecek
+
+    if (entryType === "TRANSFER") {
+      // transferde tıklanan kişi = alıcı (tek)
+      selectedParticipants.clear();
+      selectedParticipants.add(user.uid);
+
+      // payer alıcıyla aynı olamaz → aynıysa payer'i sıfırla
+      if (payerId === user.uid) payerId = null;
+
       renderParticipantsList();
+      return;
     }
+
+    // EXPENSE: eski multi-select davranışı
+    if (selectedParticipants.has(user.uid)) {
+      selectedParticipants.delete(user.uid);
+      if (payerId === user.uid) payerId = null;
+    } else {
+      selectedParticipants.add(user.uid);
+    }
+
+    renderParticipantsList();
   });
+
 
   participantsContainer.appendChild(item);
 }
@@ -333,28 +350,77 @@ function addManualParticipantItem(name, index) {
   `;
 
   item.addEventListener("click", (e) => {
-    if (e.target.closest(".participant-item") === item) {
-      if (e.ctrlKey || e.metaKey) {
-        payerId = `manual_${index}`;
-      } else {
-        if (selectedParticipants.has(`manual_${index}`)) {
-          selectedParticipants.delete(`manual_${index}`);
-          if (payerId === `manual_${index}`) payerId = null;
-        } else {
-          selectedParticipants.add(`manual_${index}`);
-        }
-      }
+    if (e.target.closest(".participant-item") !== item) return;
+
+    const entryType = stEntryType?.value || "EXPENSE";
+    const id = `manual_${index}`;
+
+    if (entryType === "TRANSFER") {
+      selectedParticipants.clear();
+      selectedParticipants.add(id);
+      if (payerId === id) payerId = null;
       renderParticipantsList();
+      return;
     }
+
+    if (selectedParticipants.has(id)) {
+      selectedParticipants.delete(id);
+      if (payerId === id) payerId = null;
+    } else {
+      selectedParticipants.add(id);
+    }
+
+    renderParticipantsList();
   });
+
 
   participantsContainer.appendChild(item);
 }
 
 function updateSelectedCount() {
+  const entryType = stEntryType?.value || "EXPENSE";
   const count = selectedParticipants.size;
+
   selectedCount.textContent = `${count} katılımcı seçildi`;
+
+  if (entryType === "TRANSFER") {
+    const recipient = selectedParticipants.values().next().value || null;
+    const ok = !!stTitle.value.trim() && !!stAmount.value && !!payerId && !!recipient && payerId !== recipient;
+    saveExpenseBtn.disabled = !ok;
+    return;
+  }
+
+  // EXPENSE
   saveExpenseBtn.disabled = count === 0 || !stTitle.value.trim() || !stAmount.value || !payerId;
+}
+
+
+// Seçim kurallarını uygula
+function applyEntryTypeRules() {
+  if (!stEntryType) return;
+  const type = stEntryType.value || "EXPENSE";
+
+  selectAllParticipants.disabled = (type === "TRANSFER");
+
+  if (type === "TRANSFER") {
+    // transferde sadece 1 alıcı kalsın
+    if (selectedParticipants.size > 1) {
+      const first = selectedParticipants.values().next().value;
+      selectedParticipants = new Set([first]);
+    }
+    // payer alıcıyla aynı olamaz
+    const recipient = selectedParticipants.values().next().value || null;
+    if (recipient && payerId === recipient) payerId = null;
+  }
+
+  renderParticipantsList();
+  updateSelectedCount();
+}
+
+
+// Change event'ini ekle
+if (stEntryType) {
+  stEntryType.addEventListener("change", applyEntryTypeRules);
 }
 
 selectAllParticipants.addEventListener("click", () => {
@@ -392,6 +458,8 @@ clearFormBtn.addEventListener("click", () => {
   manualParticipants = [];
   editingExpenseId = null;
   saveExpenseBtn.textContent = "Kaydet";
+  stEntryType.value = "EXPENSE";
+  applyEntryTypeRules();
   renderParticipantsList();
   stStatus.textContent = "Form temizlendi";
 });
@@ -415,14 +483,21 @@ saveExpenseBtn.addEventListener("click", async () => {
   const title = stTitle.value.trim();
   const amount = Number(stAmount.value);
   const currency = stCurrency.value;
-  const date = stDate.value;
-  const category = stCategory.value;
-  const note = stNote.value.trim();
+  const entryType = stEntryType ? stEntryType.value : "EXPENSE";
+  const date = stDate?.value || new Date().toISOString().split("T")[0];
+  const category = (entryType === "TRANSFER") ? "transfer" : (stCategory?.value || "diger");
+  const note = stNote?.value?.trim?.() || "";
 
   if (!title) return alert("Harcama başlığı gerekli");
   if (!amount || amount <= 0) return alert("Geçerli bir tutar girin");
   if (selectedParticipants.size === 0) return alert("En az bir katılımcı seçin");
   if (!payerId) return alert("Ödeyen kişiyi belirleyin (Ctrl+Click ile)");
+
+  if (entryType === "TRANSFER") {
+    if (selectedParticipants.size !== 1) return alert("Transfer için tam 1 alıcı seçin.");
+    const onlyRecipient = [...selectedParticipants][0];
+    if (payerId === onlyRecipient) return alert("Transferde ödeyen ve alıcı aynı olamaz.");
+  }
 
   const participants = [];
   selectedParticipants.forEach(id => {
@@ -441,7 +516,7 @@ saveExpenseBtn.addEventListener("click", async () => {
 
   try {
     const payload = {
-      title, amount, currency, date, category, note,
+      entryType, title, amount, currency, date, category, note,
       participants,
       payer: payerId,
       payerName: getParticipantName(payerId),
@@ -463,7 +538,11 @@ saveExpenseBtn.addEventListener("click", async () => {
         })
       );
       stStatus.textContent = "Harcama kaydedildi ✅";
-      playSettlementSound();
+      if (entryType === "TRANSFER") {
+        playTransferSound();
+      } else {
+        playSettlementSound();
+      }
     }
 
     setTimeout(() => stStatus.textContent = "Hazır", 1500);
@@ -553,16 +632,24 @@ function renderExpensesList() {
           p.uid?.slice(0, 6);
       }).join(", ") || "";
 
+      const isTransfer = (expense.entryType || "EXPENSE") === "TRANSFER";
+
       card.innerHTML = `
         <div class="expense-header">
-          <div class="expense-title">${esc(expense.title)}</div>
+          <div class="expense-title">
+            ${esc(expense.title)}
+            <!-- YENİ: Transfer badge'i -->
+            ${(expense.entryType || "EXPENSE") === "TRANSFER" 
+              ? '<span class="chip" style="margin-left:8px; opacity:.9;">🔁 Transfer</span>' 
+              : ''}
+          </div>
           <div class="expense-amount">${Number(expense.amount || 0)} ${esc(expense.currency || "TRY")}</div>
         </div>
         <div class="expense-details">
           <div class="expense-meta">
             <div>📅 ${esc(formatDateAny(expense.date) || formatDateAny(expense.createdAt))}</div>
             <div>🏷️ ${esc(getCategoryLabel(expense.category))}</div>
-            <div>👤 ${esc(expense.payerName || "")} ödedi</div>
+            <div>👤 ${esc(expense.payerName || "")} ${isTransfer ? "gönderdi" : "ödedi"}</div>
           </div>
           ${expense.note ? `<div class="expense-note">${esc(expense.note)}</div>` : ""}
           <div class="expense-participants">
@@ -589,7 +676,8 @@ function getCategoryLabel(category) {
     ulasim: "Ulaşım",
     eglence: "Eğlence",
     konaklama: "Konaklama",
-    diger: "Diğer"
+    diger: "Diğer",
+    transfer: "Transfer"
   };
   return labels[category] || category;
 }
@@ -696,6 +784,12 @@ editExpenseBtn.addEventListener("click", () => {
   const expense = allExpenses.find(e => e.id === selectedExpenseId);
   if (!expense) return;
 
+  // ✅ entryType editte korunacak
+  if (stEntryType) {
+    stEntryType.value = expense.entryType || "EXPENSE";
+    applyEntryTypeRules();
+  }
+
   editingExpenseId = expense.id;
 
   stTitle.value = expense.title || "";
@@ -747,6 +841,7 @@ editExpenseBtn.addEventListener("click", () => {
   renderParticipantsList();
 });
 
+
 deleteExpenseBtn.addEventListener("click", async () => {
   if (!selectedExpenseId || !confirm("Bu harcamayı silmek istediğinize emin misiniz?")) return;
 
@@ -777,31 +872,64 @@ function calculateSettlement() {
   const allParticipants = new Set();
 
   allExpenses.forEach(expense => {
-    total.amount += expense.amount;
-    total.count++;
+    const entryType = expense.entryType || "EXPENSE"; // YENİ
 
-    expense.participants?.forEach(p => {
-      const id = p.type === "manual" ? p.name : p.uid;
-      allParticipants.add(id);
-    });
+    // EXPENSE (mevcut mantık)
+    if (entryType === "EXPENSE") {
+      total.amount += expense.amount;
+      total.count++;
 
-    const rawPayer = expense.payer;
-    let payerKey = rawPayer;
+      expense.participants?.forEach(p => {
+        const id = p.type === "manual" ? p.name : p.uid;
+        allParticipants.add(id);
+      });
 
-    if (rawPayer?.startsWith?.("manual_")) {
-      const idx = parseInt(rawPayer.split("_")[1], 10);
-      payerKey = expense.payerName || `manual_${idx}`;
+      const rawPayer = expense.payer;
+      let payerKey = rawPayer;
+
+      if (rawPayer?.startsWith?.("manual_")) {
+        const idx = parseInt(rawPayer.split("_")[1], 10);
+        payerKey = expense.payerName || `manual_${idx}`;
+      }
+
+      if (payerKey) balances[payerKey] = (balances[payerKey] || 0) + expense.amount;
+
+      const participantCount = expense.participants?.length || 1;
+      const share = expense.amount / participantCount;
+
+      expense.participants?.forEach(p => {
+        const id = p.type === "manual" ? p.name : p.uid;
+        balances[id] = (balances[id] || 0) - share;
+      });
     }
+    // TRANSFER (yeni mantık) - YENİ
+    else if (entryType === "TRANSFER") {
+      // payerKey = gönderen
+      const rawPayer = expense.payer;
+      let payerKey = rawPayer;
 
-    if (payerKey) balances[payerKey] = (balances[payerKey] || 0) + expense.amount;
+      if (rawPayer?.startsWith?.("manual_")) {
+        const idx = parseInt(rawPayer.split("_")[1], 10);
+        payerKey = expense.payerName || `manual_${idx}`;
+      }
 
-    const participantCount = expense.participants?.length || 1;
-    const share = expense.amount / participantCount;
+      // alıcı = participants içindeki tek kişi
+      const recipient = expense.participants?.[0];
+      if (!payerKey || !recipient) return;
 
-    expense.participants?.forEach(p => {
-      const id = p.type === "manual" ? p.name : p.uid;
-      balances[id] = (balances[id] || 0) - share;
-    });
+      const recipientKey = recipient.type === "manual" ? recipient.name : recipient.uid;
+
+      // Transfer: gönderenin bakiyesi artar (+amount), alıcının bakiyesi azalır (-amount)
+      balances[payerKey] = (balances[payerKey] || 0) + expense.amount;
+      balances[recipientKey] = (balances[recipientKey] || 0) - expense.amount;
+
+      // istatistiklere dahil et
+      total.amount += expense.amount;
+      total.count++;
+
+      allParticipants.add(payerKey);
+      allParticipants.add(recipientKey);
+    }
   });
 
   totalExpenseEl.textContent = `${total.amount.toFixed(2)} TRY`;
@@ -897,20 +1025,43 @@ sendSummaryBtn.addEventListener("click", async () => {
 function renderPayerOptions() {
   if (!payerSelect) return;
 
-  const current = payerSelect.value;
+  const entryType = stEntryType?.value || "EXPENSE";
+  const currentUiValue = payerSelect.value; // UI'daki mevcut seçim
   payerSelect.innerHTML = `<option value="">— Seç —</option>`;
+
+  // TRANSFER: alıcı = selectedParticipants içindeki tek kişi
+  const recipientId = entryType === "TRANSFER"
+    ? (selectedParticipants.values().next().value || null)
+    : null;
 
   const options = [];
 
-  selectedParticipants.forEach(id => {
-    if (id.startsWith("manual_")) {
-      const idx = parseInt(id.split("_")[1], 10);
-      options.push({ id, name: manualParticipants[idx] || "manuel" });
-    } else {
-      const u = usersCache.find(x => x.uid === id);
-      options.push({ id, name: u?.displayName || u?.email || id });
-    }
-  });
+  if (entryType === "TRANSFER") {
+    // payer seçenekleri: tüm user + tüm manual (alıcı hariç)
+    usersCache.forEach(u => {
+      if (u.uid !== recipientId) {
+        options.push({ id: u.uid, name: u.displayName || u.email || u.uid });
+      }
+    });
+
+    manualParticipants.forEach((name, index) => {
+      const id = `manual_${index}`;
+      if (id !== recipientId) {
+        options.push({ id, name: name || "manuel" });
+      }
+    });
+  } else {
+    // EXPENSE: payer seçenekleri sadece seçili katılımcılardan
+    selectedParticipants.forEach(id => {
+      if (id.startsWith("manual_")) {
+        const idx = parseInt(id.split("_")[1], 10);
+        options.push({ id, name: manualParticipants[idx] || "manuel" });
+      } else {
+        const u = usersCache.find(x => x.uid === id);
+        options.push({ id, name: u?.displayName || u?.email || id });
+      }
+    });
+  }
 
   options
     .sort((a, b) => a.name.localeCompare(b.name, "tr"))
@@ -921,14 +1072,30 @@ function renderPayerOptions() {
       payerSelect.appendChild(opt);
     });
 
-  if ([...selectedParticipants].includes(current)) {
-    payerSelect.value = current;
-    payerId = current;
-  } else {
-    payerSelect.value = "";
-    payerId = null;
+  // payerId/UI seçim koruma (TRANSFER'de recipient olamaz)
+  const isValid = (id) => {
+    if (!id) return false;
+    if (entryType === "TRANSFER" && recipientId && id === recipientId) return false;
+    return options.some(o => o.id === id);
+  };
+
+  if (isValid(currentUiValue)) {
+    payerSelect.value = currentUiValue;
+    payerId = currentUiValue;
+    return;
   }
+
+  if (isValid(payerId)) {
+    payerSelect.value = payerId;
+    return;
+  }
+
+  // otomatik payer seçme: TRANSFER'de otomatik seçme yapma (kullanıcı seçsin)
+  payerId = null;
+  payerSelect.value = "";
 }
+
+
 
 /* ---------- AUTH STATE ---------- */
 onAuthStateChanged(auth, async (user) => {
@@ -997,3 +1164,17 @@ function playSettlementSound() {
     console.warn("sound play failed", e);
   }
 }
+
+function playTransferSound() {
+  try {
+    const a = document.getElementById("transferSound");
+    if (!a) return;
+    a.currentTime = 0;
+    a.play().catch(() => {
+      // autoplay engeline takılabilir
+    });
+  } catch (e) {
+    console.warn("transfer sound play failed", e);
+  }
+}
+

@@ -54,13 +54,15 @@
               <input id="stTitle" placeholder="Örn: Akşam Yemeği, Market Alışverişi" maxlength="80" />
             </div>
             <div class="field">
+              <label for="stDate">Tarih</label>
+              <input id="stDate" type="date" />
+            </div>
+            <div class="field">
               <label for="stAmount">Tutar *</label>
               <div class="flex-row">
                 <input id="stAmount" type="number" inputmode="decimal" placeholder="Örn: 1250" style="flex: 1;" />
                 <select id="stCurrency" style="width: 100px;">
                   <option value="TRY">₺ TRY</option>
-                  <option value="USD">$ USD</option>
-                  <option value="EUR">€ EUR</option>
                 </select>
               </div>
             </div>
@@ -68,9 +70,14 @@
 
           <div class="grid-responsive">
             <div class="field">
-              <label for="stDate">Tarih</label>
-              <input id="stDate" type="date" />
+              <label>Kayıt Tipi</label>
+              <select id="stEntryType">
+                <option value="EXPENSE">💸 Harcama</option>
+                <option value="TRANSFER">🔁 Transfer / Ödeme</option>
+              </select>
+              <div class="hint">Transfer bölünmez; borç kapatır.</div>
             </div>
+
             <div class="field">
               <label>Harcama Türü</label>
               <select id="stCategory">
@@ -231,5 +238,6 @@
   <script type="module" src="app.js"></script>
 
   <audio id="settlementSound" preload="auto" src="assets/settlement-sound.mp3"></audio>
+  <audio id="transferSound" preload="auto" src="assets/transfer-sound.mp3"></audio>
 </body>
 </html>

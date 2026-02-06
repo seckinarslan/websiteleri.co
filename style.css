@@ -686,3 +686,16 @@ select option {
   background: #0b0f17;
   color: #e7eefc;
 }
+
+/* Transfer badge'i için ek stil */
+.chip.transfer {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  font-size: 0.75rem;
+}
+
+/* Transfer modunda disabled görünüm */
+select:disabled, button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
