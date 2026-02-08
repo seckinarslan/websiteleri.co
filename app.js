@@ -224,6 +224,11 @@ const expensesList = document.getElementById("expensesList");
 const expensesCount = document.getElementById("expensesCount");
 const refreshExpensesBtn = document.getElementById("refreshExpenses");
 const filterCategory = document.getElementById("filterCategory");
+const expensesPagination = document.getElementById("expensesPagination");
+const expensesPrevBtn = document.getElementById("expensesPrev");
+const expensesNextBtn = document.getElementById("expensesNext");
+const expensesPageSelect = document.getElementById("expensesPageSelect");
+const expensesPageInfo = document.getElementById("expensesPageInfo");
 const calculateSettlementBtn = document.getElementById("calculateSettlement");
 const totalExpenseEl = document.getElementById("totalExpense");
 const expenseCountEl = document.getElementById("expenseCount");
@@ -250,6 +255,8 @@ let payerId = null;
 let allExpenses = [];
 let selectedExpenseId = null;
 let editingExpenseId = null;
+const EXPENSES_PAGE_SIZE = 10;
+let currentExpensesPage = 1;
 
 async function loadUsersForParticipants() {
   const usersRef = collection(db, "users");
@@ -586,6 +593,8 @@ async function loadExpenses() {
     allExpenses = [];
     snap.forEach(d => allExpenses.push({ id: d.id, ...d.data() }));
 
+    currentExpensesPage = 1;
+
     renderExpensesList();
     updateExpensesCount();
   } catch (e) {
@@ -605,10 +614,10 @@ async function loadExpenses() {
 function renderExpensesList() {
   expensesList.innerHTML = "";
 
-  const categoryFilter = filterCategory.value;
-  const filteredExpenses = categoryFilter
-    ? allExpenses.filter(exp => exp.category === categoryFilter)
-    : allExpenses;
+  const filteredExpenses = getFilteredExpenses();
+
+  updateExpensesCount(filteredExpenses.length);
+  updatePaginationControls(filteredExpenses.length);
 
   if (filteredExpenses.length === 0) {
     expensesList.innerHTML = `
@@ -619,7 +628,12 @@ function renderExpensesList() {
     return;
   }
 
-  filteredExpenses.forEach(expense => {
+  const totalPages = Math.max(1, Math.ceil(filteredExpenses.length / EXPENSES_PAGE_SIZE));
+  currentExpensesPage = Math.min(currentExpensesPage, totalPages);
+  const startIndex = (currentExpensesPage - 1) * EXPENSES_PAGE_SIZE;
+  const pageItems = filteredExpenses.slice(startIndex, startIndex + EXPENSES_PAGE_SIZE);
+
+  pageItems.forEach(expense => {
     try {
       const card = document.createElement("div");
       card.className = "expense-card cursor-pointer";
@@ -682,8 +696,43 @@ function getCategoryLabel(category) {
   return labels[category] || category;
 }
 
-function updateExpensesCount() {
-  expensesCount.textContent = `${allExpenses.length} harcama bulundu`;
+function updateExpensesCount(count = allExpenses.length) {
+  expensesCount.textContent = `${count} harcama bulundu`;
+}
+
+function getFilteredExpenses() {
+  const categoryFilter = filterCategory.value;
+  return categoryFilter
+    ? allExpenses.filter(exp => exp.category === categoryFilter)
+    : allExpenses;
+}
+
+function updatePaginationControls(totalItems) {
+  if (!expensesPagination) return;
+
+  if (totalItems === 0) {
+    expensesPagination.classList.add("hidden");
+    return;
+  }
+
+  expensesPagination.classList.remove("hidden");
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / EXPENSES_PAGE_SIZE));
+  currentExpensesPage = Math.min(currentExpensesPage, totalPages);
+
+  expensesPrevBtn.disabled = currentExpensesPage <= 1;
+  expensesNextBtn.disabled = currentExpensesPage >= totalPages;
+  expensesPageInfo.textContent = `Sayfa ${currentExpensesPage} / ${totalPages}`;
+
+  expensesPageSelect.innerHTML = "";
+  for (let i = 1; i <= totalPages; i += 1) {
+    const option = document.createElement("option");
+    option.value = String(i);
+    option.textContent = `Sayfa ${i}`;
+    expensesPageSelect.appendChild(option);
+  }
+  expensesPageSelect.value = String(currentExpensesPage);
+  expensesPageSelect.disabled = totalPages === 1;
 }
 
 refreshExpensesBtn.addEventListener("click", async () => {
@@ -698,7 +747,29 @@ refreshExpensesBtn.addEventListener("click", async () => {
   }
 });
 
-filterCategory.addEventListener("change", renderExpensesList);
+filterCategory.addEventListener("change", () => {
+  currentExpensesPage = 1;
+  renderExpensesList();
+});
+expensesPrevBtn?.addEventListener("click", () => {
+  if (currentExpensesPage > 1) {
+    currentExpensesPage -= 1;
+    renderExpensesList();
+  }
+});
+
+expensesNextBtn?.addEventListener("click", () => {
+  const totalPages = Math.max(1, Math.ceil(getFilteredExpenses().length / EXPENSES_PAGE_SIZE));
+  if (currentExpensesPage < totalPages) {
+    currentExpensesPage += 1;
+    renderExpensesList();
+  }
+});
+
+expensesPageSelect?.addEventListener("change", () => {
+  currentExpensesPage = Number(expensesPageSelect.value) || 1;
+  renderExpensesList();
+});
 payerSelect?.addEventListener("change", () => {
   payerId = payerSelect.value || null;
   updateSelectedCount();

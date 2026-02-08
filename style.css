@@ -467,6 +467,25 @@ textarea {
   margin-top: 8px;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.pagination select {
+  min-width: 140px;
+}
+
 .settlement-stats {
   margin-top: 16px;
   padding: 16px;
@@ -641,6 +660,17 @@ textarea {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+  .pagination {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pagination button,
+  .pagination select {
+    width: 100%;
+  }
+  .pagination-info {
+    text-align: center;
   }
   .modal-overlay {
     padding: 10px;
