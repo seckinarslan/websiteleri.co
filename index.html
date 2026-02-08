@@ -134,33 +134,6 @@
         </div>
       </div>
 
-      <!-- Expenses List -->
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Harcama Geçmişi</div>
-            <div class="panel-subtitle" id="expensesCount">0 harcama bulundu</div>
-          </div>
-          <div class="flex-row">
-            <button id="refreshExpenses" type="button">Yenile</button>
-            <select id="filterCategory">
-              <option value="">Tüm Kategoriler</option>
-              <option value="yemek">Yemek</option>
-              <option value="market">Market</option>
-              <option value="ulasim">Ulaşım</option>
-              <option value="eglence">Eğlence</option>
-              <option value="konaklama">Konaklama</option>
-              <option value="diger">Diğer</option>
-            </select>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div id="expensesList" class="expenses-list">
-            <!-- Expenses will be loaded here -->
-          </div>
-        </div>
-      </div>
-
       <!-- Settlement Summary -->
       <div class="panel">
         <div class="panel-header">
@@ -203,6 +176,33 @@
           <div class="flex-row mt-2">
             <button id="exportData" type="button">Veriyi Dışa Aktar</button>
             <button id="sendSummary" type="button">Özeti Chat'e Gönder</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Expenses List -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Harcama Geçmişi</div>
+            <div class="panel-subtitle" id="expensesCount">0 harcama bulundu</div>
+          </div>
+          <div class="flex-row">
+            <button id="refreshExpenses" type="button">Yenile</button>
+            <select id="filterCategory">
+              <option value="">Tüm Kategoriler</option>
+              <option value="yemek">Yemek</option>
+              <option value="market">Market</option>
+              <option value="ulasim">Ulaşım</option>
+              <option value="eglence">Eğlence</option>
+              <option value="konaklama">Konaklama</option>
+              <option value="diger">Diğer</option>
+            </select>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="expensesList" class="expenses-list">
+            <!-- Expenses will be loaded here -->
           </div>
         </div>
       </div>
